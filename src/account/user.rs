@@ -66,14 +66,17 @@ impl User {
         self.stocks.len()
     }
 
-    //fn get_next_id()
-
+    //Gets the next ID for a stock
+    fn get_next_stock_id(&mut self) -> u64 {
+        self.stock_id_generator += 1;
+        self.stock_id_generator
+    }
     /// Setters    
 
     /// Buying Stock
     
     //Buys a stock
-    pub fn buy_stock(&mut self, stock : Stock) -> Result<String, String> {
+    pub fn buy_stock(&mut self, mut stock : Stock) -> Result<String, String> {
         //Checks that the user has enough money to purchase the stock
         if self.money() < stock.purchase_price() { return Err(format!("{} does not have enough money to purchase {}", self, stock))}
 
@@ -84,6 +87,15 @@ impl User {
         let stock_name = stock.name().clone();
         //Purchases the stock
         self.money -= stock.purchase_price();
+
+        //Sets the stocks ID
+        let stock_id_change = stock.set_id(self.get_next_stock_id());
+
+        //Ensures the stocks ID was switched
+        match stock_id_change {
+            Err(error) => return Err(error),
+            _ => (),
+        }
         //Adds the stock to the vector
         self.stocks.push(stock);
 

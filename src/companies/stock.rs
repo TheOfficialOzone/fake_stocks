@@ -1,7 +1,10 @@
+use super::company_manager::CompanyManager;
+
 
 
 /*
-A stock represents 
+A stock represents a share of a company
+They do not exist until a User buys one from the company
  */
 pub struct Stock {
     company_id : u64,
@@ -55,14 +58,16 @@ impl Stock {
     }
 
     //Get the value of a stock
-    pub fn value(&self) -> f32 {
+    // None, if no company with such value exists
+    pub fn value(&self, company_manager : CompanyManager) -> Option<f32> {
+        //Gets the company by it's ID
+        let company_price = company_manager.get_company_by_id(self.company_id());
+
         //Gets the companies price
-        // match get_company_price(self.name()) {
-        //     Ok(price) => return price,
-        //     Err(err) => println!("Error: {}", err),
-        // }
-        //Returns 0.0 if there is an error
-        0.0
+        match company_price {
+            Err(error) => return None,
+            Ok(company) => return Some(company.stock_price()),
+        }
     }
 
     //Sets the id of the stock
