@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Hello!</title>
+  </head>
+  <body>
+    <h1>Hello!</h1>
+    <p>Hey from Rust</p>
+    <canvas id="myCanvas" width="300" height="150"></canvas>
+    <script>
+      var canvas = document.getElementById("myCanvas");
+      var ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#FF0000";
+      ctx.fillRect(0, 0, 50, 50);
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(300, 150);
+      ctx.stroke();
+      </script>
+  </body>
+</html>

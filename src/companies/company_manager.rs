@@ -1,6 +1,7 @@
 
 
 use crate::Company;
+use rand::Rng;
 
 /*
 The Company manager holds all other companies
@@ -36,6 +37,15 @@ impl CompanyManager {
      */
     pub fn companies(&self) -> &Vec<Company> {
         &self.companies
+    }
+
+    /*
+    Gets the companies from the Company Manager as mutable
+
+    @return &Vec<Company>, A reference to the Company vector
+     */
+    pub fn companies_mut(&mut self) -> &mut Vec<Company> {
+        &mut self.companies
     }
 
     /*
@@ -124,8 +134,6 @@ impl CompanyManager {
         Ok(&filtered[0])
     }
 
-
-
     /// Setters
 
     /*
@@ -151,50 +159,25 @@ impl CompanyManager {
         //Prints out the company
         Ok(format!("Added company: {}", held_name))
     }
+
+    /*
+    Updates the company manager (Changes the price of the companies)
+     */
+    pub fn update(&mut self) {
+        //Loops through each company
+        for company in self.companies_mut() {
+            let current_stock_price = company.stock_price();
+
+            //Generates a random price change
+            let mut rng = rand::thread_rng();
+            let price_change : f32 = rng.gen_range(-5.0..5.0);
+
+            let price_change_result = company.set_stock_price(current_stock_price + price_change);
+            println!("Price of {} changing by {}", company.name(), price_change);
+            match price_change_result {
+                Err(error) => println!("ERROR: {}", error),
+                _ => (),
+            }
+        }
+    }
 }
-
-
-
-// Old Garbage that im unsure if to delete
-
-    // /*
-    // Gets the company's price from it's name
-
-    // @param name, The name of the company
-
-    // @return Result<f32, String>, Ok() is the companies price, Err() is an error message 
-    // */
-    // pub fn get_company_price_by_name(&self, name : &String) -> Result<f32, String> {
-    //     //Gets the company
-    //     let result = self.get_company_by_name(name);
-
-    //     //Checks the result
-    //     match result {
-    //         Err(err) => return Err(err),
-    //         _ => (),
-    //     }
-
-    //     //Returns the price of the company
-    //     Ok(result.unwrap().stock_price())
-    // }
-
-    // /*
-    // Gets the company's price from it's id
-
-    // @param id, The id of the company
-
-    // @return Result<f32, String>, Ok() is the companies price, Err() is an error message 
-    // */
-    // pub fn get_company_price_by_id(&self, id : u64) -> Result<f32, String> {
-    //     //Gets the company
-    //     let result = self.get_company_by_id(id);
-
-    //     //Checks the result
-    //     match result {
-    //         Err(err) => return Err(err),
-    //         _ => (),
-    //     }
-
-    //     //Returns the price of the company
-    //     Ok(result.unwrap().stock_price())
-    // }

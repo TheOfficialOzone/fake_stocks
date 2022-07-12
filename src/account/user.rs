@@ -48,6 +48,11 @@ impl User {
         self.money
     }
 
+    //Gets the stocks from the user
+    pub fn stocks(&self) ->&Vec<Stock> {
+        &self.stocks
+    }
+
     //Gets the total amount of money a user has (In money and stock combined!)
     pub fn assets_value(&self) -> f32 {
         //Defaults the total to our current money
@@ -66,6 +71,14 @@ impl User {
         self.stocks.len()
     }
 
+    //Gets a stock from the user
+    pub fn get_stock(&self, pos : usize) -> &Stock {
+        //Gets the stock at that position
+        &self.stocks[pos]
+    }
+
+
+
     //Gets the next ID for a stock
     fn get_next_stock_id(&mut self) -> u64 {
         self.stock_id_generator += 1;
@@ -80,11 +93,9 @@ impl User {
         //Checks that the user has enough money to purchase the stock
         if self.money() < stock.purchase_price() { return Err(format!("{} does not have enough money to purchase {}", self, stock))}
 
-        //Changes the stocks ID
-        //let id_change = stock.set_id(new_id)
-
-
+        //Stores the stocks name
         let stock_name = stock.name().clone();
+
         //Purchases the stock
         self.money -= stock.purchase_price();
 
@@ -101,6 +112,19 @@ impl User {
 
         Ok(format!("Bought stock: {}", stock_name))
     }
+
+    /*
+    Gets all the stocks of the user into one string
+     */
+    pub fn stocks_to_string(&self) -> String {
+        let mut stock_string : String = String::new();
+
+        for stock in self.stocks() {
+            stock_string.push_str(&format!("\t{}\n", stock));
+        }
+
+        stock_string
+    }
 }
 
 
@@ -108,9 +132,9 @@ impl User {
 Prints the User to the screen
  */
 impl std::fmt::Display for User {
-    //Prints the stocks information when printed
+    //Prints the stocks information
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "User {}, Stock amount {}, Money: {}$, Total Value: {}$", self.name(), self.stock_amount(), self.money(), self.assets_value())
+        write!(f, "User {}, Money: {}$ \nStocks: \n{}", self.name(), self.money(), self.stocks_to_string())
     }
 }
 

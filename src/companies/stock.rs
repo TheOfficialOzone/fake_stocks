@@ -59,13 +59,13 @@ impl Stock {
 
     //Get the value of a stock
     // None, if no company with such value exists
-    pub fn value(&self, company_manager : CompanyManager) -> Option<f32> {
+    pub fn value(&self, company_manager : &CompanyManager) -> Option<f32> {
         //Gets the company by it's ID
         let company_price = company_manager.get_company_by_id(self.company_id());
 
         //Gets the companies price
         match company_price {
-            Err(error) => return None,
+            Err(_) => return None,
             Ok(company) => return Some(company.stock_price()),
         }
     }

@@ -80,8 +80,14 @@ impl Company {
     }
 
     //Sets a new price for the Company
-    pub fn set_stock_price(&mut self, new_price : f32) {
+    pub fn set_stock_price(&mut self, new_price : f32) -> Result<String, String>{
+        if new_price < 0.0 { return Err(String::from("Price cannot be set to a negative value!")); }
+
+        //Sets the new price
         self.stock_price = new_price;
+
+        //Returns the valid result
+        Ok(format!("Price of {} was set to {}", self.name(), new_price))
     }
 
     /// Purchasing stock
