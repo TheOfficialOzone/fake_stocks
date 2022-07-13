@@ -1,7 +1,7 @@
 
 
 
-use crate::{Stock, User};
+use crate::{Stock, User, data::data_saving::SaveData};
 
 /*
 A Company is similar to a real life company
@@ -14,6 +14,7 @@ pub struct Company {
     id : u64,
     stock_amount : u64,
     stock_price : f32,
+    stock_price_history : Vec<f32>,
 }
 
 /*
@@ -34,7 +35,8 @@ impl Company {
             name,
             id : 0,
             stock_amount,
-            stock_price
+            stock_price,
+            stock_price_history : vec!(stock_price), // (Starts the pricing history at the current price)
         }
     }
 
@@ -58,6 +60,11 @@ impl Company {
     //Get the current price of the stock
     pub fn stock_price(&self) -> f32 {
         self.stock_price
+    }
+
+    //Gets the stock price history of the company
+    pub fn stock_price_history(&self) -> &Vec<f32> {
+        &self.stock_price_history
     }
 
     /// Setters
@@ -85,6 +92,9 @@ impl Company {
 
         //Sets the new price
         self.stock_price = new_price;
+        
+        //Save the prices in the company history
+        self.stock_price_history.push(new_price);
 
         //Returns the valid result
         Ok(format!("Price of {} was set to {}", self.name(), new_price))
@@ -105,6 +115,26 @@ impl Company {
     }
 }
 
+impl SaveData for Company {
+    fn get_data(&self) -> String {
+        //Starts with the name of the company
+        let mut data : String = self.name().clone();
+
+        //Write each value of the history
+        for value in self.stock_price_history().iter() {
+            data.push(',');
+            data.push_str(&value.to_string());
+        }
+        //Return the data
+        data
+    }
+}
+
+// impl SaveData for Company {
+//     fn get_data(&self) -> String {
+
+//     }
+// }
 
 /*
 Prints the company to the screen

@@ -5,6 +5,7 @@ use crate::companies::company::Company;
 use crate::companies::company_manager::CompanyManager;
 use crate::companies::stock::Stock;
 use crate::account::user::User;
+use crate::data::data_saving::{SaveData, save_to_file};
 
 use std::io::prelude::*;
 use std::fs;
@@ -13,6 +14,7 @@ use std::net::{TcpListener, TcpStream};
 //So it can use accounts and companies
 mod companies;
 mod account;
+mod data;
 
 
 fn main() {
@@ -30,33 +32,37 @@ fn main() {
     //Create Jeff Bezos
     let mut jeffy : User = User::new(String::from("Jeffry Bezos"), 1000.0);
 
-    let _ = company_manager.add_company(Company::new(String::from("Not Amazon"), 10, 10.0));
-    
-    {
-        let amazon = company_manager.get_company_mut(0).unwrap();
+    let _ = company_manager.add_company(Company::new(String::from("Amazon"), 10, 10.0));
+    let _ = company_manager.add_company(Company::new(String::from("Apple"), 10, 10.0));
 
-        println!("{}", jeffy);
+    // {
+    //     let amazon = company_manager.get_company_mut(0).unwrap();
 
-        let purchase_result = amazon.purchase_stock(&mut jeffy);
+    //     println!("{}", jeffy);
 
-        match purchase_result {
-            Err(error) => println!("{}", error),
-            Ok(success) => println!("{}", success),
-        }
-    }
+    //     let purchase_result = amazon.purchase_stock(&mut jeffy);
 
-    for _ in 0..8 {
+    //     match purchase_result {
+    //         Err(error) => println!("{}", error),
+    //         Ok(success) => println!("{}", success),
+    //     }
+    // }
+
+    for _ in 0..1000 {
         company_manager.update();
     }
 
 
-    let stock = jeffy.get_stock(0);
-    let stock_value = stock.value(&company_manager);
+    let _ = save_to_file("html/data.txt", &company_manager.get_data());
 
-    match stock_value {
-        None => (),
-        Some(x) => println!("Price of Amazon is {}", x),
-    }
+
+    // let stock = jeffy.get_stock(0);
+    // let stock_value = stock.value(&company_manager);
+
+    // match stock_value {
+    //     None => (),
+    //     Some(x) => println!("Price of Amazon is {}", x),
+    // }
 
 
     println!("{}", company_manager.get_company(0).unwrap());
@@ -79,12 +85,18 @@ fn main() {
 fn handle_connection(mut stream : TcpStream) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
+    //println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
 
     let get = b"GET / HTTP/1.1\r\n";
+    let other_get = b"GET /html/data.txt HTTP/1.1";
 
     let (status_line, filename) = if buffer.starts_with(get) {
         ("HTTP/1.1 200 OK", "html/hello.html")
+    } else if buffer.starts_with(other_get) {
+        println!("Getting Data!!------------------------------");
+        ("HTTP/1.1 200 OK", "html/data.txt")
     } else {
+        println!("Not Understood request!");
         ("HTTP/1.1 404 NOT FOUND", "html/404.html")
     };
 
@@ -96,7 +108,7 @@ fn handle_connection(mut stream : TcpStream) {
         contents.len(),
         contents
     );
-
+    
     stream.write(response.as_bytes()).unwrap();
     stream.flush().unwrap();
 }

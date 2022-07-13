@@ -1,23 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
+
   <head>
     <meta charset="utf-8">
-    <title>Hello!</title>
-  </head>
-  <body>
-    <h1>Hello!</h1>
-    <p>Hey from Rust</p>
-    <canvas id="myCanvas" width="300" height="150"></canvas>
-    <script>
-      var canvas = document.getElementById("myCanvas");
-      var ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#FF0000";
-      ctx.fillRect(0, 0, 50, 50);
+    <title>Fake Stocks</title>
 
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(300, 150);
-      ctx.stroke();
+    <!--Contains all the CSS-->
+    <style>
+      /* Used for drawing the companies stock graph */
+      .graph-child {
+          width: 500px;
+          float: left;
+          padding: 0px;
+          border: 2px solid red;
+          background-color: black; 
+          border-radius:15px; 
+          border: 5px solid #222222
+      }
+
+      .buy_button {
+        width:250px;
+        height:50px;
+        color:black;
+        background-color: greenyellow;
+        border-radius: 10px;
+        float:left;
+      }
+
+      .sell_button {
+        width:250px;
+        height:50px;
+        color:black;
+        background-color: red;
+        border-radius: 10px;
+        float:left;
+      }
+      
+    </style>
+  </head>
+  <body style = "font: 30px Helvetica">
+    <h1>Fake Stock Buyer</h1>
+    <p>Written in Rust!</p>
+
+    <!--Where the company graphs are-->
+    <div >
+      <div class="graph-child">
+        <canvas id="amazon_canvas"; width="500"; height="300";></canvas>
+        <button class="buy_button"; type="button"; onclick="buy_stock('amazon');">Purchase Amazon</button>
+        <button class="sell_button"; type="button"; onclick="sell_stock('amazon');">Sell Amazon</button>
+      </div>
+      <div class="graph-child">
+        <canvas id="apple_canvas"; width="500"; height="300";></canvas>
+        <button class="buy_button"; type="button"; onclick="buy_stock('apple');">Purchase Apple</button>
+        <button class="sell_button"; type="button"; onclick="sell_stock('apple');">Sell Apple</button>
+      </div>
+    </div>
+    
+    
+    <script>
+      //Buys a stock from a company
+      function buy_stock(company) {
+        alert("Buying stock: " + company);
+      }
+
+      function sell_stock(company) {
+        alert("Selling stock: " + company);
+      }
+
+      //Allows the drawing of rounded Rects
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        this.beginPath();
+        this.moveTo(x+r, y);
+        this.arcTo(x+w, y,   x+w, y+h, r);
+        this.arcTo(x+w, y+h, x,   y+h, r);
+        this.arcTo(x,   y+h, x,   y,   r);
+        this.arcTo(x,   y,   x+w, y,   r);
+        this.closePath();
+        return this;
+      }
+      
+
+      //Make the request for the text info
+      var rawFile = new XMLHttpRequest();
+      rawFile.open("GET", "html/data.txt", false);
+
+      //When it's done loading
+      rawFile.onloadend = function() {
+        //Get the text
+        let text = this.responseText;
+        let split_company = text.split("\n");
+
+        //For each company
+        for (let k = 0; k < split_company.length; k++) {
+          let split_text = split_company[k].split(",");
+
+          let company_name = split_text[0];
+          //Determines the canvases name
+          let canvas_name = company_name.toLowerCase() + "_canvas";
+          //Gets the canvas to draw on
+          var canvas = document.getElementById(canvas_name);
+          var ctx = canvas.getContext("2d");
+          ctx.strokeStyle = "#FFFFFF";
+          ctx.lineWidth = 2;
+
+          //The spacing and height for drawing the lines
+          let x_spacing = canvas.width / (split_text.length - 1);
+
+          //Gets the highest value for that stock
+          let max_value = 0.0;
+          for (let i = 1; i < split_text.length; i++) {
+            let value = parseFloat(split_text[i]);
+            if (value > max_value) max_value = value;
+          }
+
+          //Render_height is just under the text
+          let height = canvas.height;
+          let render_height = canvas.height - 40;
+
+          //Defaults at the bottom left of the canvas
+          ctx.moveTo(0, height);
+
+          //For each value, draw the stock graph
+          for (let i = 1; i < split_text.length; i++) {
+            let value = parseFloat(split_text[i]);
+            ctx.lineTo(x_spacing * i, height - render_height * parseFloat(value) / max_value);
+          }
+          
+          //Draw the line
+          ctx.stroke();
+
+          //Setting up the text
+          ctx.font = "30px Helvetica";
+          ctx.fillStyle = "white";
+          ctx.textAlign = "left";
+
+          //Draw the background rect for the text
+          ctx.globalAlpha = 0.2;
+          let text_size = ctx.measureText(company_name);
+          ctx.roundRect(0, 0, text_size.width + 10, 40, 8).fill();
+          ctx.globalAlpha = 1;
+          
+        
+          //Draw the company Text
+          ctx.fillText(company_name, 5, 30);
+        }
+      }
+
+      //Send the file
+      rawFile.send()
       </script>
   </body>
 </html>

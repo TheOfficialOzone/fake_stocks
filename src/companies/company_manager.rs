@@ -1,6 +1,7 @@
 
 
 use crate::Company;
+use crate::SaveData;
 use rand::Rng;
 
 /*
@@ -58,7 +59,6 @@ impl CompanyManager {
         self.id_generator += 1;
         self.id_generator
     }
-
 
     /*
     Gets the company at [pos] position
@@ -179,5 +179,21 @@ impl CompanyManager {
                 _ => (),
             }
         }
+    }
+}
+
+
+impl SaveData for CompanyManager {
+    fn get_data(&self) -> String {
+        let mut data : String = String::new();
+
+        //Add each companies data
+        for company in self.companies() {
+            data.push_str(&company.get_data());
+            data.push('\n');
+        }
+
+        //Return the data
+        data
     }
 }
