@@ -12,28 +12,49 @@
           width: 500px;
           float: left;
           padding: 0px;
-          border: 2px solid red;
           background-color: black; 
           border-radius:15px; 
           border: 5px solid #222222
       }
 
       .buy_button {
-        width:250px;
+        width:200px;
         height:50px;
+        font-size: 30px;
         color:black;
-        background-color: greenyellow;
+        background-color: rgb(0, 200, 0);
         border-radius: 10px;
         float:left;
       }
 
+      .buy_button:hover {
+        background-color: rgb(35, 255, 35);;
+      }
+
       .sell_button {
-        width:250px;
+        width:200px;
         height:50px;
+        font-size: 30px; 
         color:black;
-        background-color: red;
+        background-color: rgb(200, 0, 0);
         border-radius: 10px;
         float:left;
+      }
+
+      .sell_button:hover {
+        background-color: rgb(255, 50, 50);
+      }
+
+      .stock_amount_display {
+        width: 100px;
+        height: 50px;
+        color: black;
+        background-color: white;
+        border-radius: 10px;
+        float:left;
+        /* Centered Text */
+        font-size: 20px; 
+        text-align: center;
       }
       
     </style>
@@ -46,26 +67,51 @@
     <div >
       <div class="graph-child">
         <canvas id="amazon_canvas"; width="500"; height="300";></canvas>
-        <button class="buy_button"; type="button"; onclick="buy_stock('amazon');">Purchase Amazon</button>
-        <button class="sell_button"; type="button"; onclick="sell_stock('amazon');">Sell Amazon</button>
+        <button class="buy_button"; type="button"; onclick="buy_stock('amazon');">BUY</button>
+        <button class="sell_button"; type="button"; onclick="sell_stock('amazon');">SELL</button>
+        <button class="stock_amount_display" id="amazon_stock_amount">
+          677
+        </div>
       </div>
       <div class="graph-child">
         <canvas id="apple_canvas"; width="500"; height="300";></canvas>
-        <button class="buy_button"; type="button"; onclick="buy_stock('apple');">Purchase Apple</button>
-        <button class="sell_button"; type="button"; onclick="sell_stock('apple');">Sell Apple</button>
+        <button class="buy_button"; type="button"; onclick="buy_stock('apple');">BUY</button>
+        <button class="sell_button"; type="button"; onclick="sell_stock('apple');">SELL</button>
+        <button class="stock_amount_display" id="apple_stock_amount"></button>
       </div>
     </div>
     
-    
+    <!-- Stock Selling Script-->
     <script>
       //Buys a stock from a company
+      // company (String)
       function buy_stock(company) {
         alert("Buying stock: " + company);
+        //Make the request for the text info
+        let buy_request = new XMLHttpRequest();
+        buy_request.open("POST", "buy_request", false);
+        //Send the request
+        buy_request.send(company);
+
+        //Updates the stock display
+        let stock_display = document.getElementById(company + '_stock_amount');
+        stock_display.textContent = "Bought"
       }
 
+      //Sells a stock from a company
+      // company (String)
       function sell_stock(company) {
         alert("Selling stock: " + company);
       }
+
+      //Updates the stock count for the companies
+      function update_stock_amount() {
+
+      }
+    </script>
+    
+    <script>
+      
 
       //Allows the drawing of rounded Rects
       CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
@@ -83,7 +129,7 @@
       
 
       //Make the request for the text info
-      var rawFile = new XMLHttpRequest();
+      let rawFile = new XMLHttpRequest();
       rawFile.open("GET", "html/data.txt", false);
 
       //When it's done loading

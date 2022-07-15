@@ -16,7 +16,7 @@ Returns the filename ok successful execution
  */
 pub fn save_to_file(filename : &str, data : &String) -> Result<String, String> {
     //Creates the file
-    let mut file_result = File::create(filename);
+    let file_result = File::create(filename);
     
     //Opens the file
     let mut file;

@@ -30,7 +30,7 @@ fn main() {
     //Create amazon
 
     //Create Jeff Bezos
-    let mut jeffy : User = User::new(String::from("Jeffry Bezos"), 1000.0);
+    let jeffy : User = User::new(String::from("Jeffry Bezos"), 1000.0);
 
     let _ = company_manager.add_company(Company::new(String::from("Amazon"), 10, 10.0));
     let _ = company_manager.add_company(Company::new(String::from("Apple"), 10, 10.0));
@@ -85,18 +85,19 @@ fn main() {
 fn handle_connection(mut stream : TcpStream) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
-    //println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
 
-    let get = b"GET / HTTP/1.1\r\n";
-    let other_get = b"GET /html/data.txt HTTP/1.1";
+    println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
 
-    let (status_line, filename) = if buffer.starts_with(get) {
+    let load_page = b"GET / HTTP/1.1\r\n";
+    let load_data = b"GET /html/data.txt HTTP/1.1";
+
+    let (status_line, filename) = if buffer.starts_with(load_page) {
         ("HTTP/1.1 200 OK", "html/hello.html")
-    } else if buffer.starts_with(other_get) {
+    } else if buffer.starts_with(load_data) {
         println!("Getting Data!!------------------------------");
         ("HTTP/1.1 200 OK", "html/data.txt")
     } else {
-        println!("Not Understood request!");
+        println!("Could not understand request!");
         ("HTTP/1.1 404 NOT FOUND", "html/404.html")
     };
 

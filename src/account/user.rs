@@ -1,7 +1,7 @@
 
 
 //Needs to have Access to a stock list
-use crate::companies::stock::Stock;
+use crate::companies::{stock::Stock, company_manager::CompanyManager};
 
 
 /*
@@ -54,13 +54,17 @@ impl User {
     }
 
     //Gets the total amount of money a user has (In money and stock combined!)
-    pub fn assets_value(&self) -> f32 {
+    pub fn assets_value(&self, company_manager : &CompanyManager) -> f32 {
         //Defaults the total to our current money
         let mut total_value : f32 = self.money();
 
         //Adds each stocks value
         for stock in self.stocks.iter() {
-            total_value += stock.purchase_price();
+            let value = stock.value(company_manager);
+            match value {
+                Some(x) => total_value += x,
+                _ => (),
+            }
         }
 
         total_value
