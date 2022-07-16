@@ -1,5 +1,8 @@
 
 
+use crate::account::user_manager::{self, UserManager};
+//For storing IDs
+use crate::id::ID;
 
 use crate::companies::company::Company;
 use crate::companies::company_manager::CompanyManager;
@@ -15,60 +18,31 @@ use std::net::{TcpListener, TcpStream};
 mod companies;
 mod account;
 mod data;
+mod id;
 
 
 fn main() {
-
-    let file = fs::read("html/hello.html");
-   
-    match file {
-        Err(_) => println!("Error opening file!"),
-        Ok(_) => println!("File opened!"),
-    }
-
+    //Makes the company manager
     let mut company_manager : CompanyManager = CompanyManager::new();
-    //Create amazon
+    let mut user_manager : UserManager = UserManager::new();
+
+    //Make Jeffry
+    user_manager.new_user(String::from("Jeffry Bezos"), 1000.0);
+
 
     //Create Jeff Bezos
-    let jeffy : User = User::new(String::from("Jeffry Bezos"), 1000.0);
-
     let _ = company_manager.add_company(Company::new(String::from("Amazon"), 10, 10.0));
     let _ = company_manager.add_company(Company::new(String::from("Apple"), 10, 10.0));
-
-    // {
-    //     let amazon = company_manager.get_company_mut(0).unwrap();
-
-    //     println!("{}", jeffy);
-
-    //     let purchase_result = amazon.purchase_stock(&mut jeffy);
-
-    //     match purchase_result {
-    //         Err(error) => println!("{}", error),
-    //         Ok(success) => println!("{}", success),
-    //     }
-    // }
 
     for _ in 0..1000 {
         company_manager.update();
     }
-
+    
 
     let _ = save_to_file("html/data.txt", &company_manager.get_data());
 
-
-    // let stock = jeffy.get_stock(0);
-    // let stock_value = stock.value(&company_manager);
-
-    // match stock_value {
-    //     None => (),
-    //     Some(x) => println!("Price of Amazon is {}", x),
-    // }
-
-
-    println!("{}", company_manager.get_company(0).unwrap());
-    println!("{}", jeffy);
-
-
+    println!("{}", company_manager.get_company(0));
+    println!("{}", user_manager.get_user(0));
 
     //Web Listener testing
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();

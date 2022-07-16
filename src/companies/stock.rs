@@ -1,6 +1,7 @@
 use super::company_manager::CompanyManager;
 
 
+use super::super::id::ID;
 
 /*
 A stock represents a share of a company
@@ -8,7 +9,7 @@ They do not exist until a User buys one from the company
  */
 pub struct Stock {
     company_id : u64,
-    id : u64,
+    id : ID,
     name : String,
     purchase_price : f32,
 }
@@ -31,15 +32,15 @@ impl Stock {
             company_id,
             name,
             purchase_price,
-            id : 0,
+            id : ID::new(),
         }
     }
 
     /// Getters
     
     //Get the ID of the stock
-    pub fn id(&self) -> u64 {
-        self.id
+    pub fn id(&self) -> &ID {
+        &self.id
     }
 
     //Gets the companies id, that owns this stock
@@ -69,18 +70,6 @@ impl Stock {
             Ok(company) => return Some(company.stock_price()),
         }
     }
-
-    //Sets the id of the stock
-    pub fn set_id(&mut self, new_id : u64) -> Result<String, String> {
-        //Ensures the ID has not already been set
-        if self.id != 0 { return Err(String::from("ID has already been set!")); }
-        //The new_id cannot be 0
-        if new_id == 0 { return Err(String::from("ID cannot be set to 0")); }
-        //Changes the ID
-        self.id = new_id;
-        
-        Ok(format!("ID has been set to {}", self.id()))
-    }
 }
 
 /*
@@ -89,7 +78,7 @@ Prints the stock to the screen
 impl std::fmt::Display for Stock {
     //Prints the stocks information when printed
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Stock ID: {}, Name: {}, Company ID: {}, Purchase Price: {}$", self.id(), self.name(), self.company_id(), self.purchase_price())
+        write!(f, "Stock ID: {}, Name: {}, Company ID: {}, Purchase Price: {}$", self.id().value(), self.name(), self.company_id(), self.purchase_price())
     }
 }
 

@@ -13,7 +13,6 @@ pub struct CompanyManager<> {
     id_generator : u64,
 }
 
-
 /*
 Built in Company Manager functions
  */
@@ -62,16 +61,14 @@ impl CompanyManager {
 
     /*
     Gets the company at [pos] position
-
+    Can panic with invalid position!
+    
     @param pos, The position of the desired company
 
-    @return Result<&Company, String>, The Company at that position
+    @return &Company The Company at that position
      */
-    pub fn get_company(&self, pos : usize) -> Result<&Company, String> {
-        //Checks if the position is valid
-        if self.companies.len() < pos { return Err(format!("Position out of bounds : {}", pos))}
-        //Return the company at pos
-        Ok(&self.companies[pos])
+    pub fn get_company(&self, pos : usize) -> &Company {
+        &self.companies[pos]
     }
 
     /*

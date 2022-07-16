@@ -130,12 +130,6 @@ impl SaveData for Company {
     }
 }
 
-// impl SaveData for Company {
-//     fn get_data(&self) -> String {
-
-//     }
-// }
-
 /*
 Prints the company to the screen
  */

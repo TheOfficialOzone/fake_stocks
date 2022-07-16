@@ -2,12 +2,14 @@
 
 //Needs to have Access to a stock list
 use crate::companies::{stock::Stock, company_manager::CompanyManager};
-
+use crate::id::ID;
+use crate::SaveData;
 
 /*
 A User can use their money to purchase stock in a company
  */
 pub struct User {
+    id : ID,
     name : String,
     money : f32,
     stocks : Vec<Stock>,
@@ -28,7 +30,8 @@ impl User {
     @return User, The newly built user
     */
     pub fn new(name : String, money : f32) -> User {
-        User { 
+        User {
+            id : ID::new(),
             name, 
             money, 
             stocks: Vec::new(),
@@ -37,6 +40,11 @@ impl User {
     }
 
     /// Getters
+    
+    //Gets the Users ID
+    pub fn id(&self) -> &ID {
+        &self.id
+    }
 
     //Get the name from the user
     pub fn name(&self) -> String {
@@ -81,8 +89,6 @@ impl User {
         &self.stocks[pos]
     }
 
-
-
     //Gets the next ID for a stock
     fn get_next_stock_id(&mut self) -> u64 {
         self.stock_id_generator += 1;
@@ -93,7 +99,7 @@ impl User {
     /// Buying Stock
     
     //Buys a stock
-    pub fn buy_stock(&mut self, mut stock : Stock) -> Result<String, String> {
+    pub fn buy_stock(&mut self, stock : Stock) -> Result<String, String> {
         //Checks that the user has enough money to purchase the stock
         if self.money() < stock.purchase_price() { return Err(format!("{} does not have enough money to purchase {}", self, stock))}
 
@@ -103,14 +109,6 @@ impl User {
         //Purchases the stock
         self.money -= stock.purchase_price();
 
-        //Sets the stocks ID
-        let stock_id_change = stock.set_id(self.get_next_stock_id());
-
-        //Ensures the stocks ID was switched
-        match stock_id_change {
-            Err(error) => return Err(error),
-            _ => (),
-        }
         //Adds the stock to the vector
         self.stocks.push(stock);
 
@@ -128,6 +126,28 @@ impl User {
         }
 
         stock_string
+    }
+}
+
+/*
+Allows the user to Save Data
+ */
+impl SaveData for User {
+    fn get_data(&self) -> String {
+        //Starts with the name of the company
+        let mut data : String = self.name().clone();
+
+        //Write each stock in the list 
+        //Format [NAME]:[PURCHASE_PRICE]
+        for stock in self.stocks.iter() {
+            data.push(',');
+            //Stocks name
+            data.push_str(stock.name());
+            data.push('_');
+            data.push_str(&stock.purchase_price().to_string());
+        }
+        //Return the data
+        data
     }
 }
 
