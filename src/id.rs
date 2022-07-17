@@ -23,6 +23,11 @@ impl ID {
     pub fn value(&self) -> u64 {
         self.id
     }
+
+    //Checks if two ID's are identical
+    pub fn equals(&self, other : &ID) -> bool {
+        self.value() == other.value()
+    }
 }
 
 /*

@@ -2,6 +2,7 @@
 
 use crate::Company;
 use crate::SaveData;
+use crate::ID;
 use rand::Rng;
 
 /*
@@ -92,11 +93,11 @@ impl CompanyManager {
 
     @return Result<&Company, String>, The company with said ID
      */
-    pub fn get_company_by_id(&self, id : u64) -> Result<&Company, String> {
+    pub fn get_company_by_id(&self, id : &ID) -> Result<&Company, String> {
         //Checks every companies name
         let filtered : Vec<&Company> = self.companies()
             .iter()
-            .filter(|company| company.id() == id)
+            .filter(|company| company.id().equals(id))
             .collect();
 
         //Checks that there are results
@@ -140,15 +141,7 @@ impl CompanyManager {
 
     @return Result<String, String>, Ok() is a success message, Err() is an error message 
     */
-    pub fn add_company(&mut self, mut company : Company) -> Result<String, String> {
-        //Attempts to set the companies ID
-        let change_id = company.set_id(self.get_next_id());
-        
-        //Checks if there was an error changing the ID
-        match change_id {
-            Err(error) => return Err(format!("Failed adding company due to error: {}", error)),
-            _ => (),
-        }
+    pub fn add_company(&mut self, company : Company) -> Result<String, String> {
         //Stores the companies name
         let held_name = company.name().clone();
         //Adds the company to the vector

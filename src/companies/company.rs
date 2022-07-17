@@ -2,6 +2,7 @@
 
 
 use crate::{Stock, User, data::data_saving::SaveData};
+use crate::ID;
 
 /*
 A Company is similar to a real life company
@@ -11,7 +12,7 @@ They are responsible for tracking their previous stock price
  */
 pub struct Company {
     name : String,
-    id : u64,
+    id : ID,
     stock_amount : u64,
     stock_price : f32,
     stock_price_history : Vec<f32>,
@@ -33,7 +34,7 @@ impl Company {
     pub fn new(name : String, stock_amount : u64, stock_price : f32) -> Company {
         Company {
             name,
-            id : 0,
+            id : ID::new(),
             stock_amount,
             stock_price,
             stock_price_history : vec!(stock_price), // (Starts the pricing history at the current price)
@@ -48,8 +49,8 @@ impl Company {
     }
 
     //Gets the ID of the company
-    pub fn id(&self) -> u64 {
-        self.id
+    pub fn id(&self) -> &ID {
+        &self.id
     }
 
     //Get the amount of stocks
@@ -68,23 +69,6 @@ impl Company {
     }
 
     /// Setters
-
-    /*
-    Sets the ID of the company
-
-    @param new_ID, The new ID to use for the company
-
-    @return Result<String, String>
-     */
-    pub fn set_id(&mut self, new_id : u64) -> Result<String, String> {
-        //Ensures that the new ID is not 0 and that the ID has not already been set
-        if new_id == 0 { return Err(String::from("Cannot have ID : 0")); }
-        if self.id() != 0 { return Err(format!("Cannot change ID to {}, as it has already been altered!", new_id))}
-
-        self.id = new_id;
-        //Succesully set the ID
-        Ok(format!("ID was changed to {}", new_id))
-    }
 
     //Sets a new price for the Company
     pub fn set_stock_price(&mut self, new_price : f32) -> Result<String, String>{

@@ -8,7 +8,7 @@ A stock represents a share of a company
 They do not exist until a User buys one from the company
  */
 pub struct Stock {
-    company_id : u64,
+    company_id : ID,
     id : ID,
     name : String,
     purchase_price : f32,
@@ -26,10 +26,10 @@ impl Stock {
 
     @return Stock, The newly created stock
     */
-    pub fn new(company_id : u64,name: String, purchase_price: f32) -> Stock {
+    pub fn new(company_id : &ID, name: String, purchase_price: f32) -> Stock {
         //Creates and returns the stock
         Stock {
-            company_id,
+            company_id : company_id.clone(),
             name,
             purchase_price,
             id : ID::new(),
@@ -44,8 +44,8 @@ impl Stock {
     }
 
     //Gets the companies id, that owns this stock
-    pub fn company_id(&self) -> u64 {
-        self.company_id
+    pub fn company_id(&self) -> &ID {
+        &self.company_id
     }
 
     // Get the name of the stock

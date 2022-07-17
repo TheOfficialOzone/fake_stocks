@@ -1,6 +1,7 @@
 
 
 use crate::User;
+use crate::SaveData;
 use crate::id::ID;
 
 pub struct UserManager {
@@ -49,5 +50,25 @@ impl UserManager {
         if filtered.len() != 1 { return Err(format!("Multiple Users with ID {} found", id.value())); }
 
         Ok(filtered[0])
+    }
+}
+
+
+/*
+Allows the user to Save Data
+ */
+impl SaveData for UserManager {
+    fn get_data(&self) -> String {
+        //Starts with the name of the company
+        let mut data : String = String::new();
+
+        //Loop through each user adding their data
+        for user in self.users() {
+            data.push_str(&user.get_data());
+            data.push('\n');
+        }
+
+        //Return the data
+        data
     }
 }

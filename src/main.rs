@@ -28,8 +28,8 @@ fn main() {
 
     //Make Jeffry
     user_manager.new_user(String::from("Jeffry Bezos"), 1000.0);
-
-
+    user_manager.new_user(String::from("Jeffry Bezos"), 1000.0);
+    
     //Create Jeff Bezos
     let _ = company_manager.add_company(Company::new(String::from("Amazon"), 10, 10.0));
     let _ = company_manager.add_company(Company::new(String::from("Apple"), 10, 10.0));
