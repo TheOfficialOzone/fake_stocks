@@ -13,7 +13,6 @@ They are responsible for tracking their previous stock price
 pub struct Company {
     name : String,
     id : ID,
-    stock_amount : u64,
     stock_price : f32,
     stock_price_history : Vec<f32>,
 }
@@ -31,11 +30,10 @@ impl Company {
 
     @return Company, The newly created Company
     */
-    pub fn new(name : String, stock_amount : u64, stock_price : f32) -> Company {
+    pub fn new(name : String, stock_price : f32) -> Company {
         Company {
             name,
             id : ID::new(),
-            stock_amount,
             stock_price,
             stock_price_history : vec!(stock_price), // (Starts the pricing history at the current price)
         }
@@ -51,11 +49,6 @@ impl Company {
     //Gets the ID of the company
     pub fn id(&self) -> &ID {
         &self.id
-    }
-
-    //Get the amount of stocks
-    pub fn stock_amount(&self) -> u64 {
-        self.stock_amount
     }
 
     //Get the current price of the stock
@@ -87,16 +80,14 @@ impl Company {
     /// Purchasing stock
     
     //Purchases a stock from the company
-    pub fn purchase_stock(&mut self, user : &mut User) -> Result<String, String> {
-        //Checks that there is stock to sell
-        if self.stock_amount() == 0 { return Err(String::from("No Stock left to sell!")); }
-
+    pub fn purchase_stock(&self, user : &mut User) -> Result<String, String> {
         //Creates the bought stock
         let stock = Stock::new(self.id(), self.name.clone(), self.stock_price());
 
         //Returns the result of the users buy
         user.buy_stock(stock)
     }
+
 }
 
 impl SaveData for Company {
@@ -120,7 +111,7 @@ Prints the company to the screen
 impl std::fmt::Display for Company {
     //Prints the stocks information when printed
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Company {}, Stock amount {}, Stock price: {}$", self.name(), self.stock_amount(), self.stock_price())
+        write!(f, "Company {}, Stock price: {}$", self.name(), self.stock_price())
     }
 }
 

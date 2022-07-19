@@ -5,6 +5,8 @@ use crate::SaveData;
 use crate::ID;
 use rand::Rng;
 
+use super::stock;
+
 /*
 The Company manager holds all other companies
 This is so you can search for specific companies by their IDs, etc
@@ -79,11 +81,9 @@ impl CompanyManager {
 
     @return Result<&Company, String>, The Company at that position
      */
-    pub fn get_company_mut(&mut self, pos : usize) -> Result<&mut Company, String> {
-        //Checks if the position is valid
-        if self.companies.len() < pos { return Err(format!("Position out of bounds : {}", pos))}
+    pub fn get_company_mut(&mut self, pos : usize) -> &mut Company {
         //Return the company at pos
-        Ok(&mut self.companies[pos])
+        &mut self.companies[pos]
     }
 
     /*
@@ -134,20 +134,10 @@ impl CompanyManager {
 
     /// Setters
 
-    /*
-    Adds a company to the managers list
-
-    @param company, The company to add
-
-    @return Result<String, String>, Ok() is a success message, Err() is an error message 
-    */
-    pub fn add_company(&mut self, company : Company) -> Result<String, String> {
-        //Stores the companies name
-        let held_name = company.name().clone();
-        //Adds the company to the vector
-        self.companies.push(company);
-        //Prints out the company
-        Ok(format!("Added company: {}", held_name))
+    //Creates a new company in the manager
+    pub fn new_company(&mut self, name : String, stock_price : f32) {
+        let new_company = Company::new(name, stock_price);
+        self.companies.push(new_company);
     }
 
     /*
@@ -163,9 +153,9 @@ impl CompanyManager {
             let price_change : f32 = rng.gen_range(-5.0..5.0);
 
             let price_change_result = company.set_stock_price(current_stock_price + price_change);
-            println!("Price of {} changing by {}", company.name(), price_change);
+            //println!("Price of {} changing by {}", company.name(), price_change);
             match price_change_result {
-                Err(error) => println!("ERROR: {}", error),
+                Err(error) => (), //println!("ERROR: {}", error),
                 _ => (),
             }
         }

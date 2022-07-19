@@ -35,6 +35,11 @@ impl UserManager {
         &self.users[pos]
     }
 
+    //Gets the user at the specified Position mutably
+    pub fn get_user_mut(&mut self, pos : usize) -> &mut User {
+        &mut self.users[pos]
+    }
+
     //Gets a user by their ID
     pub fn get_user_by_id(&self, id : &ID) -> Result<&User, String> {
         let users = self.users();

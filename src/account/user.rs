@@ -13,7 +13,6 @@ pub struct User {
     name : String,
     money : f32,
     stocks : Vec<Stock>,
-    stock_id_generator : u64,
 }
 
 
@@ -35,7 +34,6 @@ impl User {
             name, 
             money, 
             stocks: Vec::new(),
-            stock_id_generator : 0,
         }
     }
 
@@ -89,11 +87,6 @@ impl User {
         &self.stocks[pos]
     }
 
-    //Gets the next ID for a stock
-    fn get_next_stock_id(&mut self) -> u64 {
-        self.stock_id_generator += 1;
-        self.stock_id_generator
-    }
     /// Setters    
 
     /// Buying Stock

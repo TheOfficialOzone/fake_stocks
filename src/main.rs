@@ -1,6 +1,6 @@
 
 
-use crate::account::user_manager::{self, UserManager};
+use crate::account::user_manager::UserManager;
 //For storing IDs
 use crate::id::ID;
 
@@ -9,9 +9,13 @@ use crate::companies::company_manager::CompanyManager;
 use crate::companies::stock::Stock;
 use crate::account::user::User;
 use crate::data::data_saving::{SaveData, save_to_file};
+use crate::servers::server;
 
-use std::io::prelude::*;
-use std::fs;
+
+use core::time;
+use crate::time::Duration;
+
+use std::thread;
 use std::net::{TcpListener, TcpStream};
 
 //So it can use accounts and companies
@@ -19,6 +23,7 @@ mod companies;
 mod account;
 mod data;
 mod id;
+mod servers;
 
 
 fn main() {
@@ -28,62 +33,53 @@ fn main() {
 
     //Make Jeffry
     user_manager.new_user(String::from("Jeffry Bezos"), 1000.0);
-    user_manager.new_user(String::from("Jeffry Bezos"), 1000.0);
-    
-    //Create Jeff Bezos
-    let _ = company_manager.add_company(Company::new(String::from("Amazon"), 10, 10.0));
-    let _ = company_manager.add_company(Company::new(String::from("Apple"), 10, 10.0));
+    user_manager.new_user(String::from("Jeffry Bezos's son Tim Cook"), 1000.0);
 
-    for _ in 0..1000 {
+    //Create Jeff Bezos
+
+    company_manager.new_company(String::from("Amazon"), 20.0);
+    company_manager.new_company(String::from("Apple"), 20.0);
+
+    for _ in 0..5 {
         company_manager.update();
     }
     
-
-    let _ = save_to_file("html/data.txt", &company_manager.get_data());
-
     println!("{}", company_manager.get_company(0));
     println!("{}", user_manager.get_user(0));
 
     //Web Listener testing
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let listener_result = TcpListener::bind("127.0.0.1:7878");
 
+    let listener;
+    match listener_result {
+        Ok(connection) => listener = connection,
+        Err(error) => panic!("{}", error),
+    }
+
+    let nonblock_result = listener.set_nonblocking(true);
+
+    match nonblock_result {
+        Err(error) => println!("{}", error),
+        _ => (),
+    }
+    
     for stream in listener.incoming() {
-        let stream = stream.unwrap();
+        //Checks for a stream
+        let stream_result = stream;
+        match stream_result {
+            //Handles the streams connection
+            Ok(stream) => {
+                match server::handle_connection(stream) {
+                    Err(error) => println!("{}", error),
+                    _ => (),
+                }
+            },
+            _ => (),
+        }
 
-        //println!("Connection established!");
-        handle_connection(stream);
+        thread::sleep(Duration::from_secs(1));
+        company_manager.update();
+        let _ = save_to_file("html/data.txt", &company_manager.get_data());
     }
 }
 
-
-fn handle_connection(mut stream : TcpStream) {
-    let mut buffer = [0; 1024];
-    stream.read(&mut buffer).unwrap();
-
-    println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
-
-    let load_page = b"GET / HTTP/1.1\r\n";
-    let load_data = b"GET /html/data.txt HTTP/1.1";
-
-    let (status_line, filename) = if buffer.starts_with(load_page) {
-        ("HTTP/1.1 200 OK", "html/hello.html")
-    } else if buffer.starts_with(load_data) {
-        println!("Getting Data!!------------------------------");
-        ("HTTP/1.1 200 OK", "html/data.txt")
-    } else {
-        println!("Could not understand request!");
-        ("HTTP/1.1 404 NOT FOUND", "html/404.html")
-    };
-
-    let contents = fs::read_to_string(filename).unwrap();
-
-    let response = format!(
-        "{}\r\nContent-Length: {}\r\n\r\n{}",
-        status_line,
-        contents.len(),
-        contents
-    );
-    
-    stream.write(response.as_bytes()).unwrap();
-    stream.flush().unwrap();
-}
