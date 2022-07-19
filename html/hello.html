@@ -84,7 +84,6 @@
     
     <!-- Stock Selling Script-->
     <script>
-
       //Buys a stock from a company
       // company (String)
       function buy_stock(company) {
@@ -113,17 +112,39 @@
 
       }
 
-      function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+      //Seconds since last Epoch
+      function seconds_since_epoch(d){ 
+        return Math.floor( d / 1000 ); 
       }
 
+      //Sleeps for time period
+      function sleep(sec_wait) {
+        //Gets the starting time of the sleep
+        let start_time = seconds_since_epoch(Date.now());
+      
+        do {
+          secs = seconds_since_epoch(Date.now());
+        } while (secs < start_time + sec_wait);
+      }
 
       //Updates the stock data
       async function update_stock_data() {
+        const interval = setInterval(() => {
+          update_stock_data_helper();
+        }, 20000);
+        // for (;;) {
+        //   console.log("Updating Stock Data!");
+        //   update_stock_data_helper();
+        //   sleep(10000);
+        // }
+      }
+
+      //Updates the stock data
+      function update_stock_data_helper() {
         //Make the request for the text info
         let rawFile = new XMLHttpRequest();
         rawFile.open("GET", "html/data.txt", false);
-
+        
         //When it's done loading
         rawFile.onloadend = function() {
           //Get the text
@@ -191,12 +212,76 @@
 
         //Send the file
         rawFile.send()
+
+        //Get the text
+        let text = rawFile.responseText;
+        let split_company = text.split("\n");
+
+        //For each company
+        for (let k = 0; k < split_company.length; k++) {
+          let split_text = split_company[k].split(",");
+
+          let company_name = split_text[0];
+          //Determines the canvases name
+          let canvas_name = company_name.toLowerCase() + "_canvas";
+          //Gets the canvas to draw on
+          var canvas = document.getElementById(canvas_name);
+          var ctx = canvas.getContext("2d");
+
+          //Clears the canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.strokeStyle = "#FFFFFF";
+          ctx.lineWidth = 2;
+
+          //The spacing and height for drawing the lines
+          let x_spacing = canvas.width / (split_text.length - 2);
+
+          //Gets the highest value for that stock
+          let max_value = 0.0;
+          let starting_value = parseFloat(split_text[1]);
+          for (let i = 1; i < split_text.length; i++) {
+            let value = parseFloat(split_text[i]);
+            if (value > max_value) max_value = value;
+          }
+
+          //Render_height is just under the text
+          let height = canvas.height;
+          let render_height = canvas.height - 40;
+
+          //Defaults at the bottom left of the canvas
+          ctx.moveTo(0, height - render_height * parseFloat(starting_value) / max_value);
+          //For each value, draw the stock graph
+          for (let i = 1; i < split_text.length; i++) {
+            let value = parseFloat(split_text[i]);
+            ctx.lineTo(x_spacing * (i-1), height - render_height * parseFloat(value) / max_value);
+          }
+          //Draw the line
+          ctx.stroke();
+
+          //Setting up the text
+          ctx.font = "30px Helvetica";
+          ctx.fillStyle = "white";
+          ctx.textAlign = "left";
+          ctx.fillStyle = "#FFFFFF";
+
+          //Draw the background rect for the text
+          ctx.globalAlpha = 0.2;
+          let text_size = ctx.measureText(company_name);
+          ctx.roundRect(0, 0, text_size.width + 10, 40, 8).stroke();
+          ctx.globalAlpha = 1;
+          
+          ctx.fillStyle = "#FFFFFF";
+          //Draw the company Text
+          ctx.fillText(company_name, 5, 30);
+        }
       }
       
     </script>
     
     <script>
-      
+      window.onload = function WindowLoad(event) {
+        update_stock_data();
+      }
 
       //Allows the drawing of rounded Rects
       CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
@@ -211,11 +296,6 @@
         this.closePath();
         return this;
       }
-
-      update_stock_data();
-      
-
-
       </script>
   </body>
 </html>

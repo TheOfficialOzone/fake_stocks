@@ -39,7 +39,7 @@ pub fn handle_connection(mut stream : TcpStream) -> Result<String, String> {
         contents
     );
     
-    stream.write(response.as_bytes())?;
+    stream.write(response.as_bytes()).unwrap();
 
     stream.flush().unwrap();
 
