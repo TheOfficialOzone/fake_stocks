@@ -59,7 +59,7 @@ fn main() {
     let nonblock_result = listener.set_nonblocking(true);
 
     match nonblock_result {
-        Err(error) => println!("{}", error),
+        Err(error) => panic!("{}", error),
         _ => (),
     }
     

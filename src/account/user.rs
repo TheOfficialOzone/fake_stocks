@@ -45,8 +45,8 @@ impl User {
     }
 
     //Get the name from the user
-    pub fn name(&self) -> String {
-        self.name.clone()
+    pub fn name(&self) -> &String {
+        &self.name
     }
 
     //Get the amount of money the user has

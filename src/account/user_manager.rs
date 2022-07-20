@@ -9,14 +9,16 @@ pub struct UserManager {
 }
 
 impl UserManager {
-    //Creates a new User manager
+    /// Creates a new User manager
     pub fn new() -> UserManager {
         UserManager {
             users: Vec::new(),
         }
     }
 
-    //Makes a new User
+
+    /// Makes a new User
+    /// 
     pub fn new_user(&mut self, name : String, money : f32) {
         //Generates the new user
         let new_user = User::new(name, money);
@@ -25,22 +27,22 @@ impl UserManager {
 
     /// Getters
 
-    //Gets the users from the User manager
+    /// Gets the users from the User manager
     pub fn users(&self) -> &Vec<User> {
         &self.users
     }
 
-    //Gets the user at the specified Position
+    /// Gets the user at the specified Position
     pub fn get_user(&self, pos : usize) -> &User {
         &self.users[pos]
     }
 
-    //Gets the user at the specified Position mutably
+    /// Gets the user at the specified Position mutably
     pub fn get_user_mut(&mut self, pos : usize) -> &mut User {
         &mut self.users[pos]
     }
 
-    //Gets a user by their ID
+    /// Gets a user by their ID
     pub fn get_user_by_id(&self, id : &ID) -> Result<&User, String> {
         let users = self.users();
 
@@ -63,6 +65,7 @@ impl UserManager {
 Allows the user to Save Data
  */
 impl SaveData for UserManager {
+    /// Gets the data of the User Manager
     fn get_data(&self) -> String {
         //Starts with the name of the company
         let mut data : String = String::new();

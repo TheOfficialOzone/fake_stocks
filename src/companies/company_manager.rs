@@ -13,7 +13,6 @@ This is so you can search for specific companies by their IDs, etc
  */
 pub struct CompanyManager<> {
     companies : Vec<Company>,
-    id_generator : u64,
 }
 
 /*
@@ -27,7 +26,6 @@ impl CompanyManager {
     pub fn new() -> CompanyManager {
         CompanyManager { 
             companies : Vec::new(),
-            id_generator : 1,
         }
     }
 
@@ -51,48 +49,18 @@ impl CompanyManager {
         &mut self.companies
     }
 
-    /*
-    Gets the next ID from the Company manager
-
-    @return u64, The next ID to use
-     */
-    fn get_next_id(&mut self) -> u64 {
-        //Increase the id_generator by 1, before returning
-        self.id_generator += 1;
-        self.id_generator
-    }
-
-    /*
-    Gets the company at [pos] position
-    Can panic with invalid position!
-    
-    @param pos, The position of the desired company
-
-    @return &Company The Company at that position
-     */
+    /// Gets a company
     pub fn get_company(&self, pos : usize) -> &Company {
         &self.companies[pos]
     }
 
-    /*
-    Gets the company at [pos] position, mutably
-
-    @param pos, The position of the desired company
-
-    @return Result<&Company, String>, The Company at that position
-     */
+    /// Gets a company mutably
     pub fn get_company_mut(&mut self, pos : usize) -> &mut Company {
         //Return the company at pos
         &mut self.companies[pos]
     }
 
-    /*
-    Gets a company by the ID
-
-    @param id, The id of the company
-
-    @return Result<&Company, String>, The company with said ID
-     */
+    /// Gets a company by it's ID
     pub fn get_company_by_id(&self, id : &ID) -> Result<&Company, String> {
         //Checks every companies name
         let filtered : Vec<&Company> = self.companies()
@@ -109,13 +77,7 @@ impl CompanyManager {
         Ok(&filtered[0])
     }
 
-    /*
-    Gets a company by it's name
-
-    @param name, The name of the company
-
-    @return Result<&Company, String>, The company with said name
-     */
+    /// Gets a company by it's name
     pub fn get_company_by_name(&self, name : &String) -> Result<&Company, String> {
         //Checks every companies name
         let filtered : Vec<&Company> = self.companies()
@@ -134,15 +96,13 @@ impl CompanyManager {
 
     /// Setters
 
-    //Creates a new company in the manager
+    /// Creates a new company in the manager
     pub fn new_company(&mut self, name : String, stock_price : f32) {
         let new_company = Company::new(name, stock_price);
         self.companies.push(new_company);
     }
 
-    /*
-    Updates the company manager (Changes the price of the companies)
-     */
+   /// Updates the prices of the companies
     pub fn update(&mut self) {
         //Loops through each company
         for company in self.companies_mut() {
@@ -153,9 +113,9 @@ impl CompanyManager {
             let price_change : f32 = rng.gen_range(-5.0..5.0);
 
             let price_change_result = company.set_stock_price(current_stock_price + price_change);
-            //println!("Price of {} changing by {}", company.name(), price_change);
+
             match price_change_result {
-                Err(error) => (), //println!("ERROR: {}", error),
+                Err(_error) => (),
                 _ => (),
             }
         }
@@ -164,6 +124,7 @@ impl CompanyManager {
 
 
 impl SaveData for CompanyManager {
+    /// Gets the Data of the Company manager in String form
     fn get_data(&self) -> String {
         let mut data : String = String::new();
 

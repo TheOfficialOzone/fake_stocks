@@ -4,15 +4,15 @@
 use crate::{Stock, User, data::data_saving::SaveData};
 use crate::ID;
 
-/*
-A Company is similar to a real life company
 
-They have shares that can be bought and sold at the price
-They are responsible for tracking their previous stock price
- */
+/// A Company is similar to a real life company
+/// 
+/// They have shares that can be bought and sold at the price
+/// They are responsible for tracking their previous stock price
+
 pub struct Company {
-    name : String,
     id : ID,
+    name : String,
     stock_price : f32,
     stock_price_history : Vec<f32>,
 }
@@ -21,15 +21,7 @@ pub struct Company {
 Default Company functions
  */
 impl Company {
-    /*
-    Builds a new company from the given parameters
-
-    @param name, The name of the stock
-    @param stock_amount, The amount of stock
-    @param stock_price, The price of the stock
-
-    @return Company, The newly created Company
-    */
+    /// Builds a new company from the given parameters
     pub fn new(name : String, stock_price : f32) -> Company {
         Company {
             name,
@@ -41,29 +33,29 @@ impl Company {
 
     /// Getters
 
-    //Get the name of the company
+    /// Get the name of the company
     pub fn name(&self) -> &String {
         &self.name
     }
 
-    //Gets the ID of the company
+    /// Gets the ID of the company
     pub fn id(&self) -> &ID {
         &self.id
     }
 
-    //Get the current price of the stock
+    /// Get the current price of the stock
     pub fn stock_price(&self) -> f32 {
         self.stock_price
     }
 
-    //Gets the stock price history of the company
+    /// Gets the stock price history of the company
     pub fn stock_price_history(&self) -> &Vec<f32> {
         &self.stock_price_history
     }
 
     /// Setters
 
-    //Sets a new price for the Company
+    /// Sets a new price for the Company
     pub fn set_stock_price(&mut self, new_price : f32) -> Result<String, String>{
         if new_price < 0.0 { return Err(String::from("Price cannot be set to a negative value!")); }
 
@@ -79,7 +71,7 @@ impl Company {
 
     /// Purchasing stock
     
-    //Purchases a stock from the company
+    /// Purchases a stock from the company
     pub fn purchase_stock(&self, user : &mut User) -> Result<String, String> {
         //Creates the bought stock
         let stock = Stock::new(self.id(), self.name.clone(), self.stock_price());
@@ -91,6 +83,7 @@ impl Company {
 }
 
 impl SaveData for Company {
+    /// Saves the companies data to a string
     fn get_data(&self) -> String {
         //Starts with the name of the company
         let mut data : String = self.name().clone();
@@ -105,11 +98,10 @@ impl SaveData for Company {
     }
 }
 
-/*
-Prints the company to the screen
- */
+
+/// Prints the company to the screen
 impl std::fmt::Display for Company {
-    //Prints the stocks information when printed
+    /// Prints the stocks information
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "Company {}, Stock price: {}$", self.name(), self.stock_price())
     }

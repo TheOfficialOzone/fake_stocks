@@ -1,12 +1,13 @@
+use crate::data::data_saving::SaveData;
+
 use super::company_manager::CompanyManager;
+
 
 
 use super::super::id::ID;
 
-/*
-A stock represents a share of a company
-They do not exist until a User buys one from the company
- */
+/// A Stock represents a share of a company
+/// In this program, they do not exist until a User buys one from a Company
 pub struct Stock {
     company_id : ID,
     id : ID,
@@ -14,18 +15,9 @@ pub struct Stock {
     purchase_price : f32,
 }
 
-/*
-Default Stock functions
- */
+/// Default stock options
 impl Stock {
-    /*
-    Builds a new stock from the given parameters
-
-    @param name, The name of the stock
-    @param price, The price of the stock
-
-    @return Stock, The newly created stock
-    */
+    /// Builds a new stock from the given parameters
     pub fn new(company_id : &ID, name: String, purchase_price: f32) -> Stock {
         //Creates and returns the stock
         Stock {
@@ -38,28 +30,28 @@ impl Stock {
 
     /// Getters
     
-    //Get the ID of the stock
+    /// Get the ID of the stock
     pub fn id(&self) -> &ID {
         &self.id
     }
 
-    //Gets the companies id, that owns this stock
+    /// Gets the companies id, that owns this stock
     pub fn company_id(&self) -> &ID {
         &self.company_id
     }
 
-    // Get the name of the stock
+    /// Get the name of the stock
     pub fn name(&self) -> &String {
         &self.name
     }
 
-    // Get the price of the stock
+    ///  Get the price of the stock
     pub fn purchase_price(&self) -> f32 {
         self.purchase_price
     }
 
-    //Get the value of a stock
-    // None, if no company with such value exists
+    /// Get the value of a stock
+    ///  None, if no company with such value exists
     pub fn value(&self, company_manager : &CompanyManager) -> Option<f32> {
         //Gets the company by it's ID
         let company_price = company_manager.get_company_by_id(self.company_id());
@@ -69,6 +61,21 @@ impl Stock {
             Err(_) => return None,
             Ok(company) => return Some(company.stock_price()),
         }
+    }
+}
+
+
+impl SaveData for Stock {
+    /// Gets data in the form of a string from the stock
+    fn get_data(&self) -> String {
+        //Stock name
+        let mut data : String = self.name().clone();
+
+        //Stock purchase price
+        data.push(',');
+        data.push_str(&self.purchase_price().to_string());
+
+        data
     }
 }
 
