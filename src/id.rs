@@ -25,7 +25,7 @@ impl ID {
     }
 
     //Checks if two ID's are identical
-    pub fn equals(&self, other : &ID) -> bool {
+    pub fn equals(&self, other : ID) -> bool {
         self.value() == other.value()
     }
 }

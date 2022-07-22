@@ -4,10 +4,12 @@ use crate::User;
 use crate::SaveData;
 use crate::id::ID;
 
+/// User Manager stores all the users in a Vectorp
 pub struct UserManager {
     users : Vec<User>,
 }
 
+/// Default User Manager functions
 impl UserManager {
     /// Creates a new User manager
     pub fn new() -> UserManager {
@@ -18,11 +20,14 @@ impl UserManager {
 
 
     /// Makes a new User
-    /// 
-    pub fn new_user(&mut self, name : String, money : f32) {
+    pub fn new_user(&mut self, name : String, money : f32) -> ID {
         //Generates the new user
         let new_user = User::new(name, money);
+        //Copies the ID for return
+        let user_id = new_user.id();
         self.users.push(new_user);
+
+        user_id
     }
 
     /// Getters
@@ -43,7 +48,7 @@ impl UserManager {
     }
 
     /// Gets a user by their ID
-    pub fn get_user_by_id(&self, id : &ID) -> Result<&User, String> {
+    pub fn get_user_by_id(&self, id : ID) -> Result<&User, String> {
         let users = self.users();
 
         //Filters the Users
@@ -60,10 +65,7 @@ impl UserManager {
     }
 }
 
-
-/*
-Allows the user to Save Data
- */
+/// Allows the User Manager to save Data
 impl SaveData for UserManager {
     /// Gets the data of the User Manager
     fn get_data(&self) -> String {

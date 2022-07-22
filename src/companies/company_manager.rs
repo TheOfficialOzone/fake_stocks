@@ -5,12 +5,9 @@ use crate::SaveData;
 use crate::ID;
 use rand::Rng;
 
-use super::stock;
 
-/*
-The Company manager holds all other companies
-This is so you can search for specific companies by their IDs, etc
- */
+/// The Company manager holds all other companies
+/// This is so you can search for specific companies by their IDs, etc
 pub struct CompanyManager<> {
     companies : Vec<Company>,
 }
@@ -19,32 +16,19 @@ pub struct CompanyManager<> {
 Built in Company Manager functions
  */
 impl CompanyManager {
-    //Constructors
-    /* 
-    Creates a new company manager
-    */
+    /// Creates a new Company Manager
     pub fn new() -> CompanyManager {
         CompanyManager { 
             companies : Vec::new(),
         }
     }
 
-    /// Getters
-
-    /*
-    Gets the companies from the Company Manager
-
-    @return &Vec<Company>, A reference to the Company vector
-     */
+    /// Gets the Company list
     pub fn companies(&self) -> &Vec<Company> {
         &self.companies
     }
 
-    /*
-    Gets the companies from the Company Manager as mutable
-
-    @return &Vec<Company>, A reference to the Company vector
-     */
+    /// Gets the company list mutably
     pub fn companies_mut(&mut self) -> &mut Vec<Company> {
         &mut self.companies
     }
@@ -61,7 +45,7 @@ impl CompanyManager {
     }
 
     /// Gets a company by it's ID
-    pub fn get_company_by_id(&self, id : &ID) -> Result<&Company, String> {
+    pub fn get_company_by_id(&self, id : ID) -> Result<&Company, String> {
         //Checks every companies name
         let filtered : Vec<&Company> = self.companies()
             .iter()
@@ -94,12 +78,15 @@ impl CompanyManager {
         Ok(&filtered[0])
     }
 
-    /// Setters
-
     /// Creates a new company in the manager
-    pub fn new_company(&mut self, name : String, stock_price : f32) {
+    pub fn new_company(&mut self, name : String, stock_price : f32) -> ID {
+        //Create the new company
         let new_company = Company::new(name, stock_price);
+        //Copy the ID
+        let company_id = new_company.id();
         self.companies.push(new_company);
+
+        company_id
     }
 
    /// Updates the prices of the companies
@@ -123,6 +110,7 @@ impl CompanyManager {
 }
 
 
+
 impl SaveData for CompanyManager {
     /// Gets the Data of the Company manager in String form
     fn get_data(&self) -> String {
@@ -136,5 +124,22 @@ impl SaveData for CompanyManager {
 
         //Return the data
         data
+    }
+}
+
+
+/// Prints the Company Manager
+impl std::fmt::Display for CompanyManager {
+    //Prints the stocks information
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let mut text = String::new();
+
+        text.push_str("--- Company Manager ---\n");
+        //Loops through every company manager
+        for company in self.companies() {
+            text.push_str(&format!("\t{}\n", company));
+        }
+
+        write!(f, "{}", text)
     }
 }

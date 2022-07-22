@@ -32,54 +32,56 @@ fn main() {
     let mut user_manager : UserManager = UserManager::new();
 
     //Make Jeffry
-    user_manager.new_user(String::from("Jeffry Bezos"), 1000.0);
-    user_manager.new_user(String::from("Jeffry Bezos's son Tim Cook"), 1000.0);
+    let _jef = user_manager.new_user(String::from("Jeffry Bezos"), 1000.0);
+    let _tim = user_manager.new_user(String::from("Jeffry Bezos's son Tim Cook"), 1000.0);
 
     //Create Jeff Bezos
 
-    company_manager.new_company(String::from("Amazon"), 20.0);
-    company_manager.new_company(String::from("Apple"), 20.0);
+    let _amazon = company_manager.new_company(String::from("Amazon"), 20.0);
+    let _apple = company_manager.new_company(String::from("Apple"), 20.0);
 
     for _ in 0..5 {
         company_manager.update();
     }
     
-    println!("{}", company_manager.get_company(0));
-    println!("{}", user_manager.get_user(0));
-
+    println!("{}", company_manager.get_company_by_id(_amazon).unwrap());
+    println!("{}", company_manager.get_company_by_id(_apple).unwrap());
+    println!("{}", user_manager.get_user_by_id(_jef).unwrap());
+    println!("{}", user_manager.get_user_by_id(_tim).unwrap());
+    println!("{}", company_manager);
     //Web Listener testing
-    let listener_result = TcpListener::bind("127.0.0.1:7878");
+    // let listener_result = TcpListener::bind("127.0.0.1:7878");
 
-    let listener;
-    match listener_result {
-        Ok(connection) => listener = connection,
-        Err(error) => panic!("{}", error),
-    }
+    // let listener;
+    // match listener_result {
+    //     Ok(connection) => listener = connection,
+    //     Err(error) => panic!("{}", error),
+    // }
 
-    let nonblock_result = listener.set_nonblocking(true);
+    // let nonblock_result = listener.set_nonblocking(true);
 
-    match nonblock_result {
-        Err(error) => panic!("{}", error),
-        _ => (),
-    }
+    // match nonblock_result {
+    //     Err(error) => panic!("{}", error),
+    //     _ => (),
+    // }
     
-    for stream in listener.incoming() {
-        //Checks for a stream
-        let stream_result = stream;
-        match stream_result {
-            //Handles the streams connection
-            Ok(stream) => {
-                match server::handle_connection(stream) {
-                    Err(error) => println!("{}", error),
-                    _ => (),
-                }
-            },
-            _ => (),
-        }
+    // for stream in listener.incoming() {
+    //     //Checks for a stream
+    //     let stream_result = stream;
+    //     match stream_result {
+    //         //Handles the streams connection
+    //         Ok(stream) => {
+    //             match server::handle_connection(stream) {
+    //                 Err(error) => println!("{}", error),
+    //                 _ => (),
+    //             }
+    //         },
+    //         _ => (),
+    //     }
 
-        thread::sleep(Duration::from_secs(1));
-        company_manager.update();
-        let _ = save_to_file("html/data.txt", &company_manager.get_data());
-    }
+    //     thread::sleep(Duration::from_secs(1));
+    //     company_manager.update();
+    //     let _ = save_to_file("html/data.txt", &company_manager.get_data());
+    // }
 }
 

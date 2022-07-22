@@ -18,10 +18,10 @@ pub struct Stock {
 /// Default stock options
 impl Stock {
     /// Builds a new stock from the given parameters
-    pub fn new(company_id : &ID, name: String, purchase_price: f32) -> Stock {
+    pub fn new(company_id : ID, name: String, purchase_price: f32) -> Stock {
         //Creates and returns the stock
         Stock {
-            company_id : company_id.clone(),
+            company_id,
             name,
             purchase_price,
             id : ID::new(),
@@ -31,13 +31,13 @@ impl Stock {
     /// Getters
     
     /// Get the ID of the stock
-    pub fn id(&self) -> &ID {
-        &self.id
+    pub fn id(&self) -> ID {
+        self.id
     }
 
     /// Gets the companies id, that owns this stock
-    pub fn company_id(&self) -> &ID {
-        &self.company_id
+    pub fn company_id(&self) -> ID {
+        self.company_id
     }
 
     /// Get the name of the stock

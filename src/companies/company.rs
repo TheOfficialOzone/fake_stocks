@@ -17,9 +17,8 @@ pub struct Company {
     stock_price_history : Vec<f32>,
 }
 
-/*
-Default Company functions
- */
+
+/// Default COmpany functions
 impl Company {
     /// Builds a new company from the given parameters
     pub fn new(name : String, stock_price : f32) -> Company {
@@ -39,8 +38,8 @@ impl Company {
     }
 
     /// Gets the ID of the company
-    pub fn id(&self) -> &ID {
-        &self.id
+    pub fn id(&self) -> ID {
+        self.id
     }
 
     /// Get the current price of the stock
