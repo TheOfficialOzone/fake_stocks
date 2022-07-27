@@ -2,25 +2,25 @@
 
 
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 //IDs are unique for each one created
 #[derive(Clone, Copy)]
 pub struct ID {
-    id : u64,
+    id : usize,
 }
 
 impl ID {
     //Generates a new ID
     pub fn new<'a>() -> ID {
-        static COUNTER : AtomicU64 = AtomicU64::new(0);
+        static COUNTER : AtomicUsize = AtomicUsize::new(0);
 
         let prev_val = COUNTER.fetch_add(1, Ordering::Relaxed);
         ID { id: prev_val }
     }
 
     //Gets the value of the ID
-    pub fn value(&self) -> u64 {
+    pub fn value(&self) -> usize {
         self.id
     }
 

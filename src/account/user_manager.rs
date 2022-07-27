@@ -2,7 +2,7 @@
 
 use crate::User;
 use crate::SaveData;
-use crate::id::ID;
+use crate::ID;
 
 /// User Manager stores all the users in a Vectorp
 pub struct UserManager {
@@ -37,6 +37,10 @@ impl UserManager {
         &self.users
     }
 
+    pub fn users_mut(&mut self) -> &mut Vec<User> {
+        &mut self.users
+    }
+
     /// Gets the user at the specified Position
     pub fn get_user(&self, pos : usize) -> &User {
         &self.users[pos]
@@ -62,6 +66,18 @@ impl UserManager {
         if filtered.len() != 1 { return Err(format!("Multiple Users with ID {} found", id.value())); }
 
         Ok(filtered[0])
+    }
+
+    /// Gets the users by it's ID mutably
+    pub fn get_user_by_id_mut(&mut self, id : ID) -> Result<&mut User, String> {
+        //Loops through every user until it find a user with a matching id
+        for user in self.users_mut() {
+            if user.id().equals(id) {
+                return Ok(user);
+            }
+        }
+
+        Err(String::from("No user found"))
     }
 }
 

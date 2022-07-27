@@ -71,7 +71,7 @@ impl Company {
     /// Purchasing stock
     
     /// Purchases a stock from the company
-    pub fn purchase_stock(&self, user : &mut User) -> Result<String, String> {
+    pub fn purchase_stock(&self, user : &mut User) -> Result<(), String> {
         //Creates the bought stock
         let stock = Stock::new(self.id(), self.name.clone(), self.stock_price());
 

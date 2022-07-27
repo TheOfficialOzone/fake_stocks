@@ -10,6 +10,7 @@ use rand::Rng;
 /// This is so you can search for specific companies by their IDs, etc
 pub struct CompanyManager<> {
     companies : Vec<Company>,
+    stored_save : String,
 }
 
 /*
@@ -20,6 +21,7 @@ impl CompanyManager {
     pub fn new() -> CompanyManager {
         CompanyManager { 
             companies : Vec::new(),
+            stored_save : String::new(),
         }
     }
 
@@ -89,7 +91,7 @@ impl CompanyManager {
         company_id
     }
 
-   /// Updates the prices of the companies
+    /// Updates the prices of the companies
     pub fn update(&mut self) {
         //Loops through each company
         for company in self.companies_mut() {
@@ -106,6 +108,10 @@ impl CompanyManager {
                 _ => (),
             }
         }
+
+        //Updates the stored save data
+        self.stored_save.clear();
+        self.stored_save = self.get_data();
     }
 }
 
@@ -114,14 +120,23 @@ impl CompanyManager {
 impl SaveData for CompanyManager {
     /// Gets the Data of the Company manager in String form
     fn get_data(&self) -> String {
+        //If the stored save data isn't empty, return it as it has yet to be updated
+        if !self.stored_save.is_empty() {
+            return self.stored_save.clone();
+        }
+
         let mut data : String = String::new();
 
         //Add each companies data
         for company in self.companies() {
+            //Adds the companies data
             data.push_str(&company.get_data());
             data.push('\n');
         }
-
+        //removes the last '\n'
+        if data.len() > 0 {
+            data.pop();
+        }
         //Return the data
         data
     }

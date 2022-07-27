@@ -1,7 +1,8 @@
 
 
+use crate::companies::stock::StockWallet;
 //Needs to have Access to a stock list
-use crate::companies::{stock::Stock, company_manager::CompanyManager};
+use crate::companies::stock::Stock;
 use crate::id::ID;
 use crate::SaveData;
 
@@ -10,10 +11,8 @@ pub struct User {
     id : ID,
     name : String,
     money : f32,
-    stocks : Vec<Stock>,
+    stock_wallet : StockWallet,
 }
-
-
 
 /// Default User functions
 impl User {
@@ -24,7 +23,7 @@ impl User {
             id : ID::new(),
             name, 
             money, 
-            stocks: Vec::new(),
+            stock_wallet : StockWallet::new(),
         }
     }
 
@@ -45,37 +44,14 @@ impl User {
         self.money
     }
 
-    /// Gets the stocks from the user
-    pub fn stocks(&self) ->&Vec<Stock> {
-        &self.stocks
-    }
-
-    /// Gets the total amount of money a user has (In money and stock combined!)
-    pub fn assets_value(&self, company_manager : &CompanyManager) -> f32 {
-        //Defaults the total to our current money
-        let mut total_value : f32 = self.money();
-
-        //Adds each stocks value
-        for stock in self.stocks.iter() {
-            let value = stock.value(company_manager);
-            match value {
-                Some(x) => total_value += x,
-                _ => (),
-            }
-        }
-
-        total_value
+    /// Gets the stock wallet from the user
+    pub fn wallet(&self) -> &StockWallet {
+        &self.stock_wallet
     }
 
     /// Gets the amount of stock the user has
     pub fn stock_amount(&self) -> usize {
-        self.stocks.len()
-    }
-
-    /// Gets a stock from the user
-    pub fn get_stock(&self, pos : usize) -> &Stock {
-        //Gets the stock at that position
-        &self.stocks[pos]
+        self.wallet().stock_amount()
     }
 
     /// Setters    
@@ -83,29 +59,22 @@ impl User {
     /// Buying Stock
     
     /// Buys a stock
-    pub fn buy_stock(&mut self, stock : Stock) -> Result<String, String> {
+    pub fn buy_stock(&mut self, stock : Stock) -> Result<(), String> {
         //Checks that the user has enough money to purchase the stock
         if self.money() < stock.purchase_price() { return Err(format!("{} does not have enough money to purchase {}", self, stock))}
-
-        //Stores the stocks name
-        let stock_name = stock.name().clone();
 
         //Purchases the stock
         self.money -= stock.purchase_price();
 
-        //Adds the stock to the vector
-        self.stocks.push(stock);
-
-        Ok(format!("Bought stock: {}", stock_name))
+        // Adds the stock to the wallet (Returning it!)
+        self.stock_wallet.add_stock(stock)
     }
 
     /// Gets all the stocks of the user into a string
     fn stocks_to_string(&self) -> String {
         let mut stock_string : String = String::new();
-
-        for stock in self.stocks() {
-            stock_string.push_str(&format!("\t{}\n", stock));
-        }
+        
+        stock_string.push_str(&format!("{}", self.wallet()));
 
         stock_string
     }
@@ -115,18 +84,13 @@ impl User {
 impl SaveData for User {
     /// Gets the Users data
     fn get_data(&self) -> String {
-        //Starts with the name of the company
+        //Starts with the name of the user
         let mut data : String = self.name().clone();
+        data.push(',');
 
-        //Write each stock in the list 
-        //Format [NAME]:[PURCHASE_PRICE]
-        for stock in self.stocks.iter() {
-            data.push(',');
-            //Stocks name
-            data.push_str(stock.name());
-            data.push('_');
-            data.push_str(&stock.purchase_price().to_string());
-        }
+        //Write the wallet into the data
+        data.push_str(&self.wallet().get_data());
+
         //Return the data
         data
     }
