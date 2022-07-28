@@ -39,10 +39,6 @@ fn main() {
     let _jef = user_man.new_user(String::from("Jeffry Bezos"), 1000.0);
     let _tim = user_man.new_user(String::from("Jeffry Bezos's son Tim Cook"), 1000.0);
 
-    //Make Jeffry
-    // let _jef = user_manager.new_user(String::from("Jeffry Bezos"), 1000.0);
-    // let _tim = user_manager.new_user(String::from("Jeffry Bezos's son Tim Cook"), 1000.0);
-
     //Create Jeff Bezos
 
     let _amazon = company_man.new_company(String::from("Amazon"), 20.0);
@@ -50,11 +46,25 @@ fn main() {
 
     { // Testing
         let amazon_co = company_man.get_company_by_id(_amazon).unwrap();
-        let _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
+        let mut _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
+        _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
+        _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
     }
 
     for _ in 0..5 {
         company_man.update();
+    }
+
+    { // Testing
+        let amazon_co = company_man.get_company_by_id(_amazon).unwrap();
+        let mut _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
+        _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
+        _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
+
+        let apple_co = company_man.get_company_by_id(_apple).unwrap();
+        let mut _purchase_result = apple_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
+        _purchase_result = apple_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
+        _purchase_result = apple_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
     }
     
     println!("{}", company_man.get_company_by_id(_amazon).unwrap().get_data());

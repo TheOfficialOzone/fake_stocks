@@ -32,15 +32,39 @@ impl StockWallet {
     }
 
     /// Adds a stock to the wallet
-    pub fn add_stock(&mut self, stock : Stock) -> Result<(), String> {
+    pub fn add_stock(&mut self, stock : Stock) {
         //Checks if the wallet already has the stock contained
         let has_holder = self.get_stock_holder_by_id_mut(stock.company_id());
 
         match has_holder {
             // This will never error as we just checked that the IDs match :)
-            Ok(holder) => Ok(holder.add_stock(stock).unwrap()),
-            Err(error) => Err(error),
+            Ok(holder) => holder.add_stock(stock).unwrap(),
+            Err(_) => {
+                //Makes a new stock holder
+                let mut holder = StockHolder::new(stock.name().to_string(),stock.company_id());
+
+                //Adds the stock to the holder (This can never fail as we just made the holder!)
+                holder.add_stock(stock).unwrap();
+
+                //Adds the holder to the wallet
+                self.holders.push(holder);
+            },
         }
+    }
+
+    /// Sells a certain amount of stock from a company
+    /// Returns the amount of money made from selling
+    pub fn sell_stock(&mut self, company_manager : &CompanyManager, company_id : ID, sell_amount : usize) -> Result<f32, String> {
+        // Gets the holder of the stock
+        let holder_result = self.get_stock_holder_by_id_mut(company_id);
+
+        match holder_result {
+            Err(error) => return Err(error),
+            _ => (),
+        };
+
+        // Sells the stock
+        holder_result.unwrap().sell_stock(company_manager, sell_amount)
     }
 
     /// Gets a stock holder by the companies ID
@@ -81,9 +105,9 @@ impl SaveData for StockWallet {
         
         for holder in &self.holders {
             //Adds the holders data
-            data.push_str(&format!("{}", holder));
+            data.push_str(&holder.get_data());
             //Seperated by commas
-            data.push(',');
+            data.push('\n');
         }
 
         //Removes the extra ','
@@ -173,6 +197,28 @@ impl StockHolder {
         //Determines the new average stock price with the
         Ok(())
     }
+
+    /// Sells the amount of stock from the handler
+    /// Returns the amount of money made from selling
+    pub fn sell_stock(&mut self, company_manager : &CompanyManager, sell_amount : usize) -> Result<f32, String> {
+        // Ensures there is enough stock to sell
+        if self.stock_amount() < sell_amount {
+            return Err(String::from("Selling more stock than currently owned!"));
+        }
+        
+        //Gets the company (So it know it's stock price!)
+        let stock_price;
+
+        match company_manager.get_company_by_id(self.company_id()) {
+            Ok(company) => stock_price = company.stock_price(),
+            Err(error) => return Err(error),
+        }
+
+        //Removes (x) number of stocks
+        self.stock_amount -= sell_amount;
+        //Returns how much money is made by selling the stock
+        Ok(stock_price * sell_amount as f32)
+    }
 }
 
 /// Allows the stock to save data into a string
@@ -202,7 +248,7 @@ impl SaveData for StockHolder {
 impl std::fmt::Display for StockHolder {
     //Prints the stocks information when printed
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Company ID: {}, Name: {}, Amount{}, Purchase Price: {}$", self.company_id(), self.company_name(), self.stock_amount(), self.avg_purchase_price())
+        write!(f, "Company ID: {}, Name: {}, Amount: {}, Average purchase price: {}$", self.company_id(), self.company_name(), self.stock_amount(), self.avg_purchase_price())
     }
 }
 

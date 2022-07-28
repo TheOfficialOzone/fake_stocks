@@ -1,8 +1,8 @@
 
 
-use crate::companies::stock::StockWallet;
 //Needs to have Access to a stock list
-use crate::companies::stock::Stock;
+use crate::companies::stock::{StockWallet, Stock};
+use crate::CompanyManager;
 use crate::id::ID;
 use crate::SaveData;
 
@@ -66,8 +66,22 @@ impl User {
         //Purchases the stock
         self.money -= stock.purchase_price();
 
-        // Adds the stock to the wallet (Returning it!)
-        self.stock_wallet.add_stock(stock)
+        // Adds the stock to the wallet
+        self.stock_wallet.add_stock(stock);
+        Ok(())
+    }
+
+    /// Sells stock stock from the user
+    pub fn sell_stock(&mut self, company_manager : &CompanyManager, company_id : ID, sell_amount : usize) -> Result<(), String> {
+        //Sells the stock from the stock wallet
+        let sell_result = self.stock_wallet.sell_stock(company_manager, company_id, sell_amount);
+
+        match sell_result {
+            Ok(sell_money) => self.money += sell_money,
+            Err(error) => return Err(error),
+        }
+
+        Ok(())
     }
 
     /// Gets all the stocks of the user into a string
@@ -86,7 +100,7 @@ impl SaveData for User {
     fn get_data(&self) -> String {
         //Starts with the name of the user
         let mut data : String = self.name().clone();
-        data.push(',');
+        data.push('\n');
 
         //Write the wallet into the data
         data.push_str(&self.wallet().get_data());
@@ -101,7 +115,7 @@ impl SaveData for User {
 impl std::fmt::Display for User {
     /// Prints the Users information
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "User {}, Money: {}$ \nStocks ({}): \n{}", self.name(), self.money(), self.stock_amount(), self.stocks_to_string())
+        write!(f, "User {}, Money: {}$, Stock amount: {} \n{}", self.name(), self.money(), self.stock_amount(), self.stocks_to_string())
     }
 }
 
