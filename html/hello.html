@@ -151,23 +151,27 @@
 
         //Make the request for the text info
         let buy_request = new XMLHttpRequest();
-        buy_request.open("POST", "buy_request", false);
+        buy_request.open("POST", "buy_request", true);
+
+        //When the response is recieved, update the HTML
+        buy_request.onload = function() {
+          //Updates the stock display
+          if (buy_request.responseText == "Bought") {
+            let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
+
+            //Updates the stock amount map
+            stock_amount_map.set(company.toLowerCase(), stock_amount_map.get(company.toLowerCase()) + amount);
+            
+            let current_value = parseInt(stock_display.textContent);
+            stock_display.textContent = current_value + amount;
+            //Updates the amount of cash and stock amount (Since it needs to recalculate the average stock price!)
+            update_money_amount();
+            update_stock_amount();
+          } 
+        }
+
         //Send the request
         buy_request.send(amount + ',' + company);
-
-        //Updates the stock display
-        if (buy_request.responseText == "Bought") {
-          let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
-
-          //Updates the stock amount map
-          stock_amount_map.set(company.toLowerCase(), stock_amount_map.get(company.toLowerCase()) + amount);
-          
-          let current_value = parseInt(stock_display.textContent);
-          stock_display.textContent = current_value + amount;
-          //Updates the amount of cash and stock amount (Since it needs to recalculate the average stock price!)
-          update_money_amount();
-          update_stock_amount();
-        } 
       }
 
       //Sells a stock from a company
@@ -185,20 +189,24 @@
 
         //Make the request for the text info
         let sell_request = new XMLHttpRequest();
-        sell_request.open("POST", "sell_request", false);
+        sell_request.open("POST", "sell_request", true);
+
+        //When the response is recieved, update the HTML
+        sell_request.onload = function() {
+          //Updates the stock display
+          if (sell_request.responseText == "Sold") {
+            let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
+
+            let current_value = parseInt(stock_display.textContent);
+            stock_display.textContent = current_value - amount;
+            //Updates the amount of cash and stock amount (Since it needs to recalculate the average stock price!)
+            update_money_amount();
+            update_stock_amount();
+          } 
+        }
+
         //Send the request
         sell_request.send(amount + ',' + company);
-
-        //Updates the stock display
-        if (sell_request.responseText == "Sold") {
-          let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
-
-          let current_value = parseInt(stock_display.textContent);
-          stock_display.textContent = current_value - amount;
-          //Updates the amount of cash and stock amount (Since it needs to recalculate the average stock price!)
-          update_money_amount();
-          update_stock_amount();
-        } 
       }
 
       //Updates the amount of money

@@ -7,7 +7,6 @@ use crate::id::ID;
 use crate::SaveData;
 use crate::users::password::Password;
 
-
 /// A User can use their money to purchase stock in a company
 pub struct User {
     id : ID,
@@ -37,7 +36,12 @@ impl User {
         self.id
     }
 
-    /// Get the name from the user
+    /// Gets the users User name
+    pub fn user_name(&self) -> &String {
+        &self.user_name
+    }
+
+    /// Get the display name from the user
     pub fn display_name(&self) -> &String {
         &self.display_name
     }
@@ -55,6 +59,12 @@ impl User {
     /// Gets the amount of stock the user has
     pub fn stock_amount(&self) -> usize {
         self.wallet().stock_amount()
+    }
+
+    /// Attempts to enter the password to the User
+    /// True on success, false if password is wrong
+    pub fn try_password(&self, password : Password) -> bool {
+        return self.password.compare(password);
     }
 
     /// Buys a stock
