@@ -5,29 +5,32 @@ use crate::companies::stock::{StockWallet, Stock};
 use crate::CompanyManager;
 use crate::id::ID;
 use crate::SaveData;
+use crate::users::password::Password;
+
 
 /// A User can use their money to purchase stock in a company
 pub struct User {
     id : ID,
-    name : String,
+    user_name : String,
+    display_name : String,
+    password : Password,   
     money : f32,
     stock_wallet : StockWallet,
 }
 
 /// Default User functions
 impl User {
-
     /// Makes a new User
-    pub fn new(name : String, money : f32) -> User {
+    pub fn new(user_name : String, display_name : String, password : Password) -> User {
         User {
             id : ID::new(),
-            name, 
-            money, 
+            user_name,
+            display_name, 
+            password,
+            money : 1000.0, 
             stock_wallet : StockWallet::new(),
         }
     }
-
-    /// Getters
     
     /// Gets the Users ID
     pub fn id(&self) -> ID {
@@ -35,8 +38,8 @@ impl User {
     }
 
     /// Get the name from the user
-    pub fn name(&self) -> &String {
-        &self.name
+    pub fn display_name(&self) -> &String {
+        &self.display_name
     }
 
     /// Get the amount of money the user has
@@ -54,20 +57,17 @@ impl User {
         self.wallet().stock_amount()
     }
 
-    /// Setters    
-
-    /// Buying Stock
-    
     /// Buys a stock
-    pub fn buy_stock(&mut self, stock : Stock) -> Result<(), String> {
+    pub fn buy_stock(&mut self, stock : Stock, buy_amount : usize) -> Result<(), String> {
         //Checks that the user has enough money to purchase the stock
-        if self.money() < stock.purchase_price() { return Err(format!("{} does not have enough money to purchase {}", self, stock))}
+        let total_cost = stock.purchase_price() * buy_amount as f32;
+        if self.money() < total_cost { return Err(format!("{} does not have enough money to purchase {}", self, stock))}
 
         //Purchases the stock
-        self.money -= stock.purchase_price();
+        self.money -= total_cost;
 
         // Adds the stock to the wallet
-        self.stock_wallet.add_stock(stock);
+        self.stock_wallet.add_stock(stock, buy_amount);
         Ok(())
     }
 
@@ -99,7 +99,7 @@ impl SaveData for User {
     /// Gets the Users data
     fn get_data(&self) -> String {
         //Starts with the name of the user
-        let mut data : String = self.name().clone();
+        let mut data : String = self.display_name().clone();
         data.push('\n');
 
         //Write the wallet into the data
@@ -115,7 +115,7 @@ impl SaveData for User {
 impl std::fmt::Display for User {
     /// Prints the Users information
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "User {}, Money: {}$, Stock amount: {} \n{}", self.name(), self.money(), self.stock_amount(), self.stocks_to_string())
+        write!(f, "User {}, Money: {}$, Stock amount: {} \n{}", self.display_name(), self.money(), self.stock_amount(), self.stocks_to_string())
     }
 }
 

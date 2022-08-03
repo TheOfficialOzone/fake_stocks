@@ -1,6 +1,7 @@
 
 
 use crate::User;
+use crate::users::password::Password;
 use crate::SaveData;
 use crate::ID;
 
@@ -18,11 +19,10 @@ impl UserManager {
         }
     }
 
-
     /// Makes a new User
-    pub fn new_user(&mut self, name : String, money : f32) -> ID {
+    pub fn new_user(&mut self, user_name : String, display_name : String, password : Password) -> ID {
         //Generates the new user
-        let new_user = User::new(name, money);
+        let new_user = User::new(user_name, display_name, password);
         //Copies the ID for return
         let user_id = new_user.id();
         self.users.push(new_user);

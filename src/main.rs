@@ -7,8 +7,9 @@ use crate::id::ID;
 use crate::companies::company::Company;
 use crate::companies::company_manager::CompanyManager;
 use crate::companies::stock::Stock;
-use crate::account::user::User;
-use crate::account::user_manager::UserManager;
+use crate::users::user::User;
+use crate::users::password::Password;
+use crate::users::user_manager::UserManager;
 use crate::data::data_saving::SaveData;
 use crate::servers::server;
 
@@ -21,14 +22,10 @@ use std::net::TcpListener;
 mod servers;
 mod data;
 mod companies;
-mod account;
+mod users;
 mod id;
 
 fn main() {
-    //Makes the company manager
-    //let mut company_manager : CompanyManager = CompanyManager::new();
-    //let mut user_manager : UserManager = UserManager::new();
-
     //Read / Write locks
     let company_manager_rw : Arc<RwLock<CompanyManager>> = Arc::new(RwLock::new(CompanyManager::new()));
     let user_manager_rw : Arc<RwLock<UserManager>> = Arc::new(RwLock::new(UserManager::new()));
@@ -36,50 +33,23 @@ fn main() {
     let mut user_man = user_manager_rw.write().unwrap();
     let mut company_man = company_manager_rw.write().unwrap();
 
-    let _jef = user_man.new_user(String::from("Jeffry Bezos"), 1000.0);
-    let _tim = user_man.new_user(String::from("Jeffry Bezos's son Tim Cook"), 1000.0);
+    let _jef = user_man.new_user(String::from("jeffy_b"), String::from("Jeffy Bezos"), Password::new([20, 21, 23, 21]));
+    let _tim = user_man.new_user(String::from("tim_c"), String::from("Tim Cook"), Password::new([20, 20, 23, 21]));
 
     //Create Jeff Bezos
+    let _amazon = company_man.new_company(String::from("Amazon"), 200.0);
+    let _apple = company_man.new_company(String::from("Apple"), 200.0);
 
-    let _amazon = company_man.new_company(String::from("Amazon"), 20.0);
-    let _apple = company_man.new_company(String::from("Apple"), 20.0);
 
-    { // Testing
-        let amazon_co = company_man.get_company_by_id(_amazon).unwrap();
-        let mut _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
-        _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
-        _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
-    }
-
-    for _ in 0..5 {
+    for _ in 0..40 {
         company_man.update();
     }
 
-    { // Testing
-        let amazon_co = company_man.get_company_by_id(_amazon).unwrap();
-        let mut _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
-        _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
-        _purchase_result = amazon_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
-
-        let apple_co = company_man.get_company_by_id(_apple).unwrap();
-        let mut _purchase_result = apple_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
-        _purchase_result = apple_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
-        _purchase_result = apple_co.purchase_stock(user_man.get_user_by_id_mut(_jef).unwrap());
-    }
-    
-    println!("{}", company_man.get_company_by_id(_amazon).unwrap().get_data());
-    println!("{}", company_man.get_company_by_id(_apple).unwrap().get_data());
-    println!("{}", user_man.get_user_by_id(_jef).unwrap().get_data());
-    println!("{}", user_man.get_user_by_id(_tim).unwrap().get_data());
-    println!("{}", company_man);
-
     drop(user_man);
     drop(company_man);
-    
-
 
     //Web Listener testing
-    let listener_result = TcpListener::bind("127.0.0.1:7878");
+    let listener_result = TcpListener::bind("127.0.0.1:800");
 
     let listener;
     match listener_result {
@@ -87,13 +57,9 @@ fn main() {
         Err(error) => panic!("{}", error),
     }
 
-    //This is the stock price data for the main function
-    //let stock_price_data : Arc<Mutex<String>> = Arc::new(Mutex::new(String::new()));
-    
-    //This is the stock price data for the thread
+    //The company manager / user manager shared across threads!
     let thread_company_manager : Arc<RwLock<CompanyManager>> = Arc::clone(&company_manager_rw);
     let thread_user_manager : Arc<RwLock<UserManager>> = Arc::clone(&user_manager_rw); 
-
 
     // Spawns a thread to listen to web requests!
     thread::spawn(move || {
@@ -117,11 +83,14 @@ fn main() {
     
     //Gets the time of start-up
     let mut time = Instant::now();
+
+    //Forever loops as this will hopefully never crash :)
     loop {
-        //Updates the company manager every two seconds
-        if time.elapsed().as_secs() > 1 {
-            //Adds two seconds to the time
-            time += Duration::new(1,  0);
+        const LOOP_DELAY : u64 = 20;
+        //Updates the company manager every 20 seconds
+        if time.elapsed().as_secs() > LOOP_DELAY {
+            //Adds 20 seconds to the time
+            time += Duration::new(LOOP_DELAY,  0);
 
             let mut company_man = company_manager_rw.write().unwrap();
             //Update the company manager

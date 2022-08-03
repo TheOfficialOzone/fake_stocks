@@ -13,6 +13,8 @@ pub struct CompanyManager<> {
     stored_save : String,
 }
 
+
+
 /*
 Built in Company Manager functions
  */
@@ -93,13 +95,14 @@ impl CompanyManager {
 
     /// Updates the prices of the companies
     pub fn update(&mut self) {
+        const STOCK_RANGE : f32 = 20.0;
         //Loops through each company
         for company in self.companies_mut() {
             let current_stock_price = company.stock_price();
 
             //Generates a random price change
             let mut rng = rand::thread_rng();
-            let price_change : f32 = rng.gen_range(-5.0..5.0);
+            let price_change : f32 = rng.gen_range(-STOCK_RANGE..STOCK_RANGE);
 
             let price_change_result = company.set_stock_price(current_stock_price + price_change);
 

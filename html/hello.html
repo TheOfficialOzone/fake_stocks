@@ -5,21 +5,35 @@
     <meta charset="utf-8">
     <title>Day Trader</title>
 
-    <link rel="icon" href="data:image/png;base64,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">
+    <link rel="icon" href="https://www.kindpng.com/picc/m/12-129720_red-arrow-line-png-red-hand-drawn-arrow.png">
     <!--Contains all the CSS-->
     <style>
+      .graph-row {
+        display: inline-block;
+        text-align: center;
+        width: 100%; 
+        margin:0 auto; 
+      }
+
       /* Used for drawing the companies stock graph */
       .graph-child {
-          width: 500px;
-          float: left;
-          padding: 0px;
-          background-color: black; 
-          border-radius:15px; 
-          border: 5px solid #222222
+        width: 400px;
+        height: 400px;
+        padding: 0px;
+        display:inline-block;
+        background-color: black; 
+        border-radius:15px; 
+        border: 5px solid #333333;
+      }
+
+      .stock_graph {
+        width: 400px;
+        height: 342px;
+        border-radius:10px; 
       }
 
       .buy_button {
-        width:200px;
+        width:80px;
         height:50px;
         font-size: 30px;
         color:black;
@@ -33,7 +47,7 @@
       }
 
       .sell_button {
-        width:200px;
+        width:80px;
         height:50px;
         font-size: 30px; 
         color:black;
@@ -47,7 +61,7 @@
       }
 
       .stock_amount_display {
-        width: 100px;
+        width: 80px;
         height: 50px;
         color: black;
         background-color: white;
@@ -57,155 +71,265 @@
         font-size: 20px; 
         text-align: center;
       }
+
+      .money_button {
+        width:200px;
+        height:50px;
+        font-size: 30px; 
+        color:black;
+        background-color: rgb(255, 255, 255);
+        border-radius: 10px;
+        float:center;
+      }
       
     </style>
   </head>
-
-  <body style = "font: 30px Helvetica; background-color: #555555;">
+  
+  <body style = "font: 30px Helvetica; background-color: #555555; min-width: 900px;">
+    
     <h1>Day Trader</h1>
+    <button class="money_button" id="money">100$</button>
     <!--Where the company graphs are-->
-    <div>
+    <!--Centers the graphs-->
+    <div class="graph-row";>
       <div class="graph-child">
-        <canvas id="amazon_canvas"; width="500"; height="300";></canvas>
-        <button class="buy_button"; type="button"; onclick="buy_stock('amazon');">BUY</button>
-        <button class="sell_button"; type="button"; onclick="sell_stock('amazon');">SELL</button>
+        <canvas id="amazon_canvas"; class="stock_graph"; width="500"; height="440"></canvas>
+        <button class="buy_button"; type="button"; onclick="buy_stock('Amazon', 5);">+5</button>
+        <button class="buy_button"; type="button"; onclick="buy_stock('Amazon', 1);">+1</button>
+        <button class="sell_button"; type="button"; onclick="sell_stock('Amazon', 1);">-1</button>
+        <button class="sell_button"; type="button"; onclick="sell_stock('Amazon', 5);">-5</button>
         <button class="stock_amount_display" id="amazon_stock_amount">Loading</button>
       </div>
       <div class="graph-child">
-        <canvas id="apple_canvas"; width="500"; height="300";></canvas>
-        <button class="buy_button"; type="button"; onclick="buy_stock('apple');">BUY</button>
-        <button class="sell_button"; type="button"; onclick="sell_stock('apple');">SELL</button>
+        <canvas id="apple_canvas"; class="stock_graph"; width="500"; height="440"></canvas>
+        <button class="buy_button"; type="button"; onclick="buy_stock('Apple', 5);">+5</button>
+        <button class="buy_button"; type="button"; onclick="buy_stock('Apple', 1);">+1</button>
+        <button class="sell_button"; type="button"; onclick="sell_stock('Apple', 1);">-1</button>
+        <button class="sell_button"; type="button"; onclick="sell_stock('Apple', 5);">-5</button>
         <button class="stock_amount_display" id="apple_stock_amount">Loading</button>
       </div>
     </div>
 
-    <!-- Global variables -->
+    <!--Global variables-->
     <script>
+      //Holds all the companies
+      var companies = ["amazon", "apple"];
 
-      //The stock amount map
-      let stock_amount_map = new Map();
-      //Default all values to 0
+      //Stores the stocks purchase price
+      var stock_purchase_price = new Map();
+      stock_purchase_price.set("amazon", 0);
+      stock_purchase_price.set("apple", 0);
+
+      //Stores the stock amount
+      var stock_amount_map = new Map();
       stock_amount_map.set("amazon", 0);
       stock_amount_map.set("apple", 0);
 
+      //Stores the stock data
+      var stock_data_text = "";
 
+      //Stores the pressed keys
+      var pressedKeys = {};
+      window.onkeyup = function(e) { pressedKeys[e.keyCode] = false; }
+      window.onkeydown = function(e) { pressedKeys[e.keyCode] = true; console.log(e.keyCode); }
+      /*
+        Up    38
+        Down  40
+        Left  37
+        Right 39
+      */
     </script>
-    
+
     <!-- Stock Selling Script-->
     <script>
       //Buys a stock from a company
       // company (String)
-      function buy_stock(company) {
+      // amount (u_int)
+      function buy_stock(company, amount) {
+        //Ensures that there is enough stock to sell
+        let stock_amount = stock_amount_map.get(company.toLowerCase());
+
         //Make the request for the text info
         let buy_request = new XMLHttpRequest();
         buy_request.open("POST", "buy_request", false);
         //Send the request
-        buy_request.send(company);
+        buy_request.send(amount + ',' + company);
 
         //Updates the stock display
         if (buy_request.responseText == "Bought") {
-          let stock_display = document.getElementById(company + '_stock_amount');
+          let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
 
+          //Updates the stock amount map
+          stock_amount_map.set(company.toLowerCase(), stock_amount_map.get(company.toLowerCase()) + amount);
+          
           let current_value = parseInt(stock_display.textContent);
-          stock_display.textContent = current_value + 1;
+          stock_display.textContent = current_value + amount;
+          //Updates the amount of cash and stock amount (Since it needs to recalculate the average stock price!)
+          update_money_amount();
+          update_stock_amount();
         } 
       }
 
       //Sells a stock from a company
       // company (String)
-      function sell_stock(company) {
+      // amount (u_int)
+      function sell_stock(company, amount) {
+        //Ensures that there is enough stock to sell
+        let stock_amount = stock_amount_map.get(company.toLowerCase());
+
+        //If there is no stock exit
+        if (stock_amount == 0) return;
+        
+        //If there isn't enough stock, adjust it so we sell the remaining amount
+        if (stock_amount < amount) { amount = stock_amount; }
+
         //Make the request for the text info
         let sell_request = new XMLHttpRequest();
         sell_request.open("POST", "sell_request", false);
         //Send the request
-        sell_request.send(company);
+        sell_request.send(amount + ',' + company);
 
         //Updates the stock display
         if (sell_request.responseText == "Sold") {
-          let stock_display = document.getElementById(company + '_stock_amount');
+          let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
 
           let current_value = parseInt(stock_display.textContent);
-          stock_display.textContent = current_value - 1;
+          stock_display.textContent = current_value - amount;
+          //Updates the amount of cash and stock amount (Since it needs to recalculate the average stock price!)
+          update_money_amount();
+          update_stock_amount();
         } 
       }
 
-      //Updates the stock count for the companies
+      //Updates the amount of money
+      function update_money_amount() {
+        //Make the request for the text info
+        let money_file = new XMLHttpRequest();
+
+        //Opens the data file, (NOT ASYNC)
+        money_file.open("GET", "money", true);
+
+        money_file.onload = function() {
+          //Updates the stock display
+          if (money_file.responseText != null) {
+            let money_display = document.getElementById('money');
+            money_display.textContent = parseFloat(money_file.responseText).toFixed(2) + '$';
+          } 
+        }
+
+        //Send the file
+        money_file.send();
+      }
+
+      //Updates the stock count
       function update_stock_amount() {
         //Make the request for the text info
         let stock_file = new XMLHttpRequest();
 
-        //Opens the data file, (NOT ASYNC)
-        stock_file.open("GET", "html/stock_amount.txt", false);
+        //Opens the data file
+        stock_file.open("GET", "stock_amount", true);
+        console.log("Updating stock amount!");
+        //On load parse the data
+        stock_file.onload = function() {
+          parse_stock_amount(stock_file.responseText);
+          //Redraws the stock data
+          draw_stock_data();
+        }
 
-        //Send the file
+        //Sends the file
         stock_file.send();
+      }
 
-        //Gets the response
-        let response = stock_file.responseText;
+
+      // Parses the stock amount string
+      function parse_stock_amount(text) {
 
         //Splits the text by each ','
-        let split_text = response.split('\n');
-
-        //For each stock in the response
+        let split_text = text.split('\n');
+        
+        //For each stock in the text
         for (let i = 0; i < split_text.length; i++) {
-          //Has the stock
+          //Gets the stock
           let stock = split_text[i];
+          if (!stock) continue;
+
           //Splits the stock by each '_'
           let split_stock = stock.split('_');
-
+          if (split_stock.length != 3) continue;
           let stock_amount = parseInt(split_stock[0], 10);
+
           //Gets the Companies name and amount
           let company_name = split_stock[1].toLowerCase();
           let stock_price = parseFloat(split_stock[2], 10);
 
-          //Sets the stock amount
+          //Updates the maps
           stock_amount_map.set(company_name, stock_amount);
-
+          stock_purchase_price.set(company_name, stock_price);
           //Determines the canvas's name
           let display_name = company_name + "_stock_amount";
-
+        }
+        
+        //Loops through each company
+        for (let i = 0; i < companies.length; i++) {
           //Gets the canvas to draw on
-          let display = document.getElementById(display_name);
+          let display = document.getElementById(companies[i] + "_stock_amount");
 
           //Set the displays value
-          display.innerText = stock_amount;
+          display.innerText = stock_amount_map.get(companies[i]);
         }
       }
 
       //Updates the stock data
       function update_stock_data() {
         //Make the request for the text info
-        let rawFile = new XMLHttpRequest();
+        let stock_data_request = new XMLHttpRequest();
         //Opens the data file, (NOT ASYNC)
-        rawFile.open("GET", "html/data.txt", false);
+        stock_data_request.open("GET", "stock_data", true);
+
+        stock_data_request.onload = function() {
+          //Get the text, then draws the data
+          stock_data_text = stock_data_request.responseText;
+          draw_stock_data();
+        }
 
         //Send the file
-        rawFile.send();
+        stock_data_request.send();
+      }
 
-        //Get the text
-        let text = rawFile.responseText;
-        let split_company = text.split("\n");
+      //Draws the stock data
+      function draw_stock_data() {
+        //Won't render if the text is empty
+        if(!stock_data_text) return;
+
+        let split_company = stock_data_text.split("\n");
 
         //For each company
         for (let k = 0; k < split_company.length; k++) {
           let split_text = split_company[k].split(",");
 
           let company_name = split_text[0];
+
           //Determines the canvas's name
           let canvas_name = company_name.toLowerCase() + "_canvas";
+
           //Gets the canvas to draw on
           let canvas = document.getElementById(canvas_name);
+
+          //Render_height is just under the text
+          let width = canvas.width;
+          let height = canvas.height;
+          let render_height = canvas.height - 40;
 
           //Gets the 2d canvas
           let ctx = canvas.getContext("2d");
 
           //Clears the canvas
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.clearRect(0, 0, width, height);
           ctx.strokeStyle = "#FFFFFF";
           ctx.lineWidth = 2;
 
           //The spacing and height for drawing the lines
-          let x_spacing = canvas.width / (split_text.length - 2);
+          let x_spacing = width / (split_text.length - 2);
 
           //Gets the highest value for that stock
           let max_value = 0.0;
@@ -215,43 +339,70 @@
             if (value > max_value) max_value = value;
           }
 
-          //Render_height is just under the text
-          let height = canvas.height;
-          let render_height = canvas.height - 40;
-
           //Defaults at the bottom left of the canvas
           let prev_value = starting_value;
           let value = 0;
           ctx.moveTo(0, height - render_height * parseFloat(starting_value) / max_value);
-          
+          ctx.beginPath();
+
           //For each value, draw the stock graph
           for (let i = 1; i < split_text.length; i++) {
             //Get the current value
             value = parseFloat(split_text[i]);
             //Draws the stock line
-            ctx.lineTo(x_spacing * i, height - render_height * parseFloat(value) / max_value);
+            ctx.lineTo(x_spacing * (i-1), height - render_height * parseFloat(value) / max_value);
             //A Smoother line 
             prev_value = value;
           }
-          //Draw the line
+
+          //Draw the stoke line
           ctx.stroke();
 
           //Setting up the text
           ctx.font = "30px Helvetica";
-          ctx.fillStyle = "white";
           ctx.textAlign = "left";
-          ctx.fillStyle = "#FFFFFF";
 
+          //Draws the stock price line! and text
+          let average_stock_price = stock_purchase_price.get(company_name.toLowerCase());
+          if (average_stock_price != 0) {
+            ctx.beginPath()
+            // The style of the stock price line
+            ctx.strokeStyle="#5555FF";
+            ctx.lineWidth = 4;
+            //Draws the line
+            let average_line_height = height - render_height * average_stock_price / max_value;
+            //Caps the line at 0
+            if (average_line_height < 3) { average_line_height = 3; }
+            
+            ctx.moveTo(0, average_line_height);
+            ctx.lineTo(width, average_line_height);
+            ctx.stroke();
+            
+            //Only draws the square if it doesnt obstruct the company text
+            if (average_line_height > 40) {
+              //Draws the square around the text
+              let average_price_text = average_stock_price.toFixed(2);
+              let text_size = ctx.measureText(average_price_text);
+              ctx.fillStyle="#444444"
+              ctx.roundRect(1, average_line_height, text_size.width + 10, 40, 8).fill();
+
+              //Draws the text
+              ctx.fillStyle = "#FFFFFF";
+              ctx.fillText(average_price_text, 5, average_line_height + 30);
+            }
+          }
+
+          ctx.fillStyle = "#444444";
+          ctx.strokeStyle = "#000000";
           //Draw the background rect for the text
-          ctx.globalAlpha = 0.2;
-          let text_size = ctx.measureText(company_name);
-          ctx.roundRect(0, 0, text_size.width + 10, 40, 8).stroke();
-          ctx.globalAlpha = 1;
+          let company_text = company_name + " " + value.toFixed(2);
+          let text_size = ctx.measureText(company_text);
+          ctx.roundRect(1, 1, text_size.width + 10, 40, 8).fill();
           
           //Sets the text back to white
           ctx.fillStyle = "#FFFFFF";
           //Draw the company Text
-          ctx.fillText(company_name, 5, 30);
+          ctx.fillText(company_text, 5, 30);
         }
       }
       
@@ -261,12 +412,14 @@
       //When finishing the window loading get the stock data every 20s
       window.onload = function WindowLoad(event) {
         //Updates the stock data / stock amount initially
-        update_stock_data();
         update_stock_amount();
+        update_money_amount();
+        update_stock_data();
+        
         //Will continue updating the stock data every 10s
         const stock_data_interval = setInterval(() => {
           update_stock_data();
-        }, 10000);
+        }, 5000);
       }
 
       //Allows the drawing of rounded Rects

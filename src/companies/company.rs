@@ -1,7 +1,8 @@
 
 
 
-use crate::{Stock, User, data::data_saving::SaveData};
+use crate::{Stock, data::data_saving::SaveData};
+use crate::User;
 use crate::ID;
 
 
@@ -71,12 +72,12 @@ impl Company {
     /// Purchasing stock
     
     /// Purchases a stock from the company
-    pub fn purchase_stock(&self, user : &mut User) -> Result<(), String> {
+    pub fn purchase_stock(&self, user : &mut User, buy_amount : usize) -> Result<(), String> {
         //Creates the bought stock
         let stock = Stock::new(self.id(), self.name.clone(), self.stock_price());
 
         //Returns the result of the users buy
-        user.buy_stock(stock)
+        user.buy_stock(stock, buy_amount)
     }
 
 }
@@ -87,10 +88,19 @@ impl SaveData for Company {
         //Starts with the name of the company
         let mut data : String = self.name().clone();
 
-        //Write each value of the history
-        for value in self.stock_price_history().iter() {
-            data.push(',');
-            data.push_str(&value.to_string());
+        //IF the length is less than 50
+        if self.stock_price_history().len() < 50 {
+            //Write each value of the history
+            for value in self.stock_price_history().iter() {
+                data.push(',');
+                data.push_str(&value.to_string());
+            }
+        } else {
+            let price_history = self.stock_price_history();
+            for value in &price_history[price_history.len()-50..price_history.len()] {
+                data.push(',');
+                data.push_str(&value.to_string());
+            }
         }
         //Return the data
         data

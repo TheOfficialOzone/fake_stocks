@@ -32,19 +32,19 @@ impl StockWallet {
     }
 
     /// Adds a stock to the wallet
-    pub fn add_stock(&mut self, stock : Stock) {
+    pub fn add_stock(&mut self, stock : Stock, buy_amount : usize) {
         //Checks if the wallet already has the stock contained
         let has_holder = self.get_stock_holder_by_id_mut(stock.company_id());
 
         match has_holder {
             // This will never error as we just checked that the IDs match :)
-            Ok(holder) => holder.add_stock(stock).unwrap(),
+            Ok(holder) => holder.add_stock(stock, buy_amount).unwrap(),
             Err(_) => {
                 //Makes a new stock holder
                 let mut holder = StockHolder::new(stock.name().to_string(),stock.company_id());
 
                 //Adds the stock to the holder (This can never fail as we just made the holder!)
-                holder.add_stock(stock).unwrap();
+                holder.add_stock(stock, buy_amount).unwrap();
 
                 //Adds the holder to the wallet
                 self.holders.push(holder);
@@ -179,17 +179,17 @@ impl StockHolder {
     }
 
     /// Adds a stock to the holder
-    pub fn add_stock(&mut self, stock : Stock) -> Result<(), String> {
+    pub fn add_stock(&mut self, stock : Stock, buy_amount : usize) -> Result<(), String> {
         //Checks that the company ID's match
         if !stock.company_id().equals(self.company_id) {
             return Err(String::from("Company IDs do not match"));
         }
         
         //Gets the current total price
-        let total_price : f32 = stock.purchase_price + self.average_purchase_price * self.stock_amount as f32;
+        let total_price : f32 = (stock.purchase_price * buy_amount as f32) + self.average_purchase_price * self.stock_amount as f32;
         
         //We now bought 1 stock
-        self.stock_amount += 1;
+        self.stock_amount += buy_amount;
 
         //Determines the new purchase price
         self.average_purchase_price = total_price / self.stock_amount() as f32;
@@ -216,6 +216,12 @@ impl StockHolder {
 
         //Removes (x) number of stocks
         self.stock_amount -= sell_amount;
+        
+        //If we no longer have any stocks
+        if self.stock_amount() == 0 {
+            self.average_purchase_price = 0.0;
+        }
+
         //Returns how much money is made by selling the stock
         Ok(stock_price * sell_amount as f32)
     }
