@@ -51,6 +51,25 @@ impl UserManager {
         &mut self.users[pos]
     }
 
+
+    /// Gets a user by their User name
+    pub fn get_user_by_username(&self, username : &String) -> Result<&User, String> {
+        let users = self.users();
+
+        //Filters for identical user names
+        let filtered : Vec<&User> = users
+            .iter()
+            .filter(|user| user.user_name().eq(username))
+            .collect();
+
+        //Checks that the lengths are correct
+        if filtered.len() == 0 { return Err(format!("No User with name {} found", username)); }
+        if filtered.len() != 1 { return Err(format!("Multiple Users with Name {} found", username)); }
+
+        //Returns the remaining user
+        Ok(filtered[0])
+    }
+
     /// Gets a user by their ID
     pub fn get_user_by_id(&self, id : ID) -> Result<&User, String> {
         let users = self.users();

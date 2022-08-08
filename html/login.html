@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <title>Day Trader Login</title>
+
+    <link rel="icon" href="https://www.kindpng.com/picc/m/12-129720_red-arrow-line-png-red-hand-drawn-arrow.png">
+    <!--Contains all the CSS-->
+    <style>
+      .entry_box {
+        width:500px;
+        height:30px;
+        font-family:"Helvetica";
+        font-size: 30px;
+        size:30;
+      }
+
+      .submit_button {
+        width:200px;
+        height:30px;
+        font-size:20px;
+      }
+
+      .password_display {
+        width:360px;
+        height:30px;
+        font-size:20px;
+      }
+
+      .password_display:hover {
+        background-color: white;
+      }
+
+      .clear_button {
+        width:200px;
+        height:30px;
+        font-size:20px;
+      }
+
+      .password_button {
+        width:120px;
+        height:120px;
+        font-size:30px;
+        padding: 0px;
+        margin: 0px;
+      }
+
+    </style>
+  </head>
+  
+  <body style = "font-family: Helvetica; font-size:30px; background-color: #555555; min-width: 900px;">
+    <div>
+      <p1><b> Login </b></p1><br>
+
+        <label>User name</label><br>
+        <input class="entry_box"; type="text"; id="login_user_name"; name="login_user_name";><br><br>
+        <div>
+          <label>Password</label><br>
+          <!-- Comments are for removing the spacing between each button-->
+          <button class="password_button"; style="transform: translateX(120px);"; onclick="add_to_login_password('up')">Up</button><br><!--
+          --><button class="password_button"; onclick="add_to_login_password('left')">Left</button><!--
+          --><button class="password_button"; onclick="add_to_login_password('down')">Down</button><!--
+          --><button class="password_button"; onclick="add_to_login_password('right')">Right</button><br>
+          <button class="password_display"; id="login_password_display">EMPTY</button><br>
+          <button class="clear_button"; onclick="clear_password()">Clear Password</button>
+        </div>
+        <input class="submit_button"; type="submit"; value="Login"; onclick="login()"><br><br>
+    </div>
+
+    <div>
+      <p2><b> Create Account </b></p2><br>
+
+        <label>User name</label><br>
+        <input class="entry_box"; type="text"; id="create_user_name"; name="create_user_name";><br><br>
+        <label>Displayed name</label><br>
+        <input class="entry_box"; type="text"; id="create_display_name"; name="create_display_name";><br><br>
+        <div>
+          <label>Password</label><br>
+          <!-- Comments are for removing the spacing between each button-->
+          <button class="password_button"; style="transform: translateX(120px);"; onclick="add_to_create_password('up')">Up</button><br><!--
+          --><button class="password_button"; onclick="add_to_create_password('left')">Left</button><!--
+          --><button class="password_button"; onclick="add_to_create_password('down')">Down</button><!--
+          --><button class="password_button"; onclick="add_to_create_password('right')">Right</button><br>
+          <button class="password_display"; id="create_password_display">EMPTY</button><br>
+          <button class="clear_button"; onclick="clear_password()">Clear Password</button>
+        </div>
+        <input class="submit_button"; type="submit"; value="Create Account"; onclick="create_account()">
+    </div>
+  </body>
+
+  <script>
+    var password_text = "";
+    let password_size = 0;
+    const PASSWORD_SIZE = 6;
+
+    //Creates an account on the server
+    function create_account() {
+      //Make the request to create an account
+      let create_account_request = new XMLHttpRequest();
+      create_account_request.open("POST", "create_account", true);
+
+      //When loaded
+      create_account_request.onload = function() {
+        let response = create_account_request.responseText;
+
+        //It has loaded properly
+        if (response.startsWith("ID=")) {
+          //Store the cookie
+          document.cookie = response + "; path=/";
+          //Load the main page
+          location.href = "/";
+        }
+      }
+
+      //Gets the info from the elements
+      let user_name = document.getElementById("create_user_name").value;
+      let display_name = document.getElementById("create_display_name").value;
+
+      let account_data = "";
+      account_data += "USERNAME:" + user_name + '\n';
+      account_data += "DISPLAYNAME:" + display_name + '\n';
+      account_data += "PASSWORD:" + password_text;
+
+      create_account_request.send(account_data);
+    }
+
+    //Logs the user into the server
+    function login() {
+      //Make the request to create an account
+      let login_request = new XMLHttpRequest();
+      login_request.open("POST", "login", true);
+
+      //When loaded
+      login_request.onload = function() {
+        let response = login_request.responseText;
+
+        //It has loaded properly
+        if (response.startsWith("ID=")) {
+          //Store the cookie
+          document.cookie = response + "; path=/";
+          //Load the main page
+          location.href = "/";
+        }
+      }
+
+      //Gets the info from the elements
+      let user_name = document.getElementById("create_user_name").value;
+      let display_name = document.getElementById("create_display_name").value;
+
+      let account_data = "";
+      account_data += "USERNAME:" + user_name + '\n';
+      account_data += "PASSWORD:" + password_text;
+
+      login_request.send(account_data);
+    }
+
+    // Adds the text to the password
+    // Text, String (Up, Left, Down, Right)
+    function add_to_password(text) {
+      //Insures the text is a string
+      if (typeof text != "string") return;
+
+      //Ensures the password isn't too large
+      if (password_size < 6) {
+        //Adds the text to the string
+        password_text += text;
+        password_size++;
+
+        //Passwords are seperated by -
+        if (password_size < 6) {
+          password_text += '-';
+        }
+      }
+    }
+
+    // Adds the text to the login password
+    function add_to_login_password(text) {
+      add_to_password(text);
+      //Sets the login password display to the current password
+      update_login_password_display(password_text);
+    }
+
+    // Adds the text to the login password
+    function add_to_create_password(text) {
+      add_to_password(text);
+      //Sets the password display to the current password
+      update_create_password_display(password_text);
+    }
+
+    // Clears the currently entered password
+    function clear_password() {
+      password_text = "";
+      password_size = 0;
+
+      update_login_password_display("EMPTY");
+      update_create_password_display("EMPTY");
+    }
+
+    // Sets the login password display to the current password
+    function update_login_password_display(text) {
+      let password_display = document.getElementById("login_password_display");
+      password_display.textContent = text;
+    }
+
+    // Sets the create password display to the current password
+    function update_create_password_display(text) {
+      let password_display = document.getElementById("create_password_display");
+      password_display.textContent = text;
+    }
+  </script>
+</html>

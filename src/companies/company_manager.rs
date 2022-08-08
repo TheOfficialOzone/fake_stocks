@@ -27,6 +27,17 @@ impl CompanyManager {
         }
     }
 
+    /// Creates a new company in the manager
+    pub fn new_company(&mut self, name : String, stock_price : f32) -> ID {
+        //Create the new company
+        let new_company = Company::new(name, stock_price);
+        //Copy the ID
+        let company_id = new_company.id();
+        self.companies.push(new_company);
+
+        company_id
+    }
+
     /// Gets the Company list
     pub fn companies(&self) -> &Vec<Company> {
         &self.companies
@@ -35,17 +46,6 @@ impl CompanyManager {
     /// Gets the company list mutably
     pub fn companies_mut(&mut self) -> &mut Vec<Company> {
         &mut self.companies
-    }
-
-    /// Gets a company
-    pub fn get_company(&self, pos : usize) -> &Company {
-        &self.companies[pos]
-    }
-
-    /// Gets a company mutably
-    pub fn get_company_mut(&mut self, pos : usize) -> &mut Company {
-        //Return the company at pos
-        &mut self.companies[pos]
     }
 
     /// Gets a company by it's ID
@@ -82,15 +82,10 @@ impl CompanyManager {
         Ok(&filtered[0])
     }
 
-    /// Creates a new company in the manager
-    pub fn new_company(&mut self, name : String, stock_price : f32) -> ID {
-        //Create the new company
-        let new_company = Company::new(name, stock_price);
-        //Copy the ID
-        let company_id = new_company.id();
-        self.companies.push(new_company);
-
-        company_id
+    /// Clears the company manager
+    pub fn clear(&mut self) {
+        self.companies.clear();
+        self.stored_save = String::from("");
     }
 
     /// Updates the prices of the companies

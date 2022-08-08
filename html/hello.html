@@ -110,8 +110,33 @@
       </div>
     </div>
 
+    <!-- Getting Cookies-->
+    <script>
+      function get_cookie(cname) {
+        let name = cname + "=";
+        let ca = document.cookie.split(';');
+        for(let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+          }
+          if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+          }
+        }
+        return "";
+      }
+    </script>
+
     <!--Global variables-->
     <script>
+      //Ensures they have logged in before accessing the website
+      console.log(get_cookie("ID"));
+      if (get_cookie("ID") == "") {
+        location.href = "/login.html";
+      }
+
+
       //Holds all the companies
       var companies = ["amazon", "apple"];
 
@@ -128,10 +153,7 @@
       //Stores the stock data
       var stock_data_text = "";
 
-      //Stores the pressed keys
-      var pressedKeys = {};
-      window.onkeyup = function(e) { pressedKeys[e.keyCode] = false; }
-      window.onkeydown = function(e) { pressedKeys[e.keyCode] = true; console.log(e.keyCode); }
+
       /*
         Up    38
         Down  40
@@ -139,6 +161,8 @@
         Right 39
       */
     </script>
+
+
 
     <!-- Stock Selling Script-->
     <script>
