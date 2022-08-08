@@ -36,6 +36,9 @@ fn reset_company_manager(company_manager : &Arc<RwLock<CompanyManager>>) -> Resu
         Err(error) => return Err(error.to_string()),
     };
 
+    // Clears the company manager
+    company_man.clear();
+
     //Creates apple and amazon
     let _apple = company_man.new_company(String::from("Apple"), 200.0);
     let _amazon = company_man.new_company(String::from("Amazon"), 200.0);

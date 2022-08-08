@@ -7,13 +7,14 @@ use crate::id::ID;
 struct ConnectedClient {
     id : ID,
     user_id : ID,
+    user_name : String,
 }
 
 
 impl ConnectedClient {
     /// Creates a new Connected client from the IP and user_id
-    fn new(user_id : ID) -> ConnectedClient {
-        ConnectedClient { id : ID::new(), user_id }
+    fn new(user_id : ID, user_name : String) -> ConnectedClient {
+        ConnectedClient { id : ID::new(), user_id, user_name }
     }
 
     /// Checks if two clients are identical
@@ -40,6 +41,11 @@ impl ConnectedClient {
     fn client_id(&self) -> ID {
         self.id
     }
+
+    /// Gets the clients User name
+    fn user_name(&self) -> &String {
+        &self.user_name
+    }
 }
 
 /// Tracks the IPs of the user that are connected
@@ -56,10 +62,10 @@ impl ClientTracker {
 
     /// Adds a client to the list
     /// Returns the new clients ID
-    pub fn add_client(&mut self, user_id : ID) -> Result<ID, String> {
+    pub fn add_client(&mut self, user_id : ID, user_name : String) -> Result<ID, String> {
         if self.contains_user_id(user_id) { return Err(String::from("Already has a client with that user ID Address")); }
 
-        let new_client = ConnectedClient::new(user_id);
+        let new_client = ConnectedClient::new(user_id, user_name);
         let stored_id = new_client.client_id();
         self.clients.push(new_client);
 
@@ -115,6 +121,18 @@ impl ClientTracker {
         let filtered : Vec<&ConnectedClient> = self.clients
             .iter()
             .filter(|client| client.equal_user_id(user_id))
+            .collect();
+
+        // The length should be 1
+        filtered.len() == 1
+    }
+
+    /// Checks if the client tracker contains the user name
+    pub fn contains_user_name(&self, user_name : &String) -> bool {
+        // Filters all clients for matching addresses
+        let filtered : Vec<&ConnectedClient> = self.clients
+            .iter()
+            .filter(|client| client.user_name.eq(user_name))
             .collect();
 
         // The length should be 1

@@ -49,13 +49,12 @@ fn get_cookie_from_request(buffer : &[u8; 1024]) -> Result<String, String> {
     let mut request = httparse::Request::new(&mut headers);
 
     //Parses for the body's position
-    let body_pos ;
     match request.parse(buffer) {
         //If the size is found
         Ok(size) => {
             //Ensures the position is valid
             match size {
-                httparse::Status::Complete(pos) => body_pos = pos,
+                httparse::Status::Complete(_) => (),
                 httparse::Status::Partial => return Err(String::from("Buffer could not fit entire HTTP request")),
             }
         }, 
@@ -312,7 +311,19 @@ fn create_account(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTrack
     }
 
     println!("Username: {}\nDisplay name: {}\nPassword: {}", user_name, display_name, password);
+    // Validates that the user can be made
+    {
+        //Gets the client tracker
+        let client_track;
+        match client_tracker.read() {
+            Ok(client_tracker) => client_track = client_tracker,
+            Err(error) => return Err(error.to_string()),
+        }
 
+        if client_track.contains_user_name(&user_name) {
+            return Err(format!("Username {} already in use", user_name));
+        }
+    }
     //We know have a valid User, so lets make one!
 
     //Gets the user manager
@@ -322,7 +333,7 @@ fn create_account(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTrack
         Err(error) => return Err(error.to_string()),
     }
 
-    //Gets the socket tracker
+    //Gets the client tracker
     let mut client_track;
     match client_tracker.write() {
         Ok(client_tracker) => client_track = client_tracker,
@@ -330,10 +341,10 @@ fn create_account(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTrack
     }
 
     //Adds the new User
-    let user_id = user_man.new_user(user_name, display_name, user_passord);
+    let user_id = user_man.new_user(user_name.clone(), display_name, user_passord);
 
     //Now adds the new user to the tracker
-    match client_track.add_client(user_id) {
+    match client_track.add_client(user_id, user_name) {
         Ok(new_id) => Ok(format!("ID={}", new_id)),
         Err(error) => Err(error),
     }
@@ -397,7 +408,7 @@ fn login(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, use
     };
 
     //Adds the client to the socket tracker
-    match client_track.add_client(user.id()) {
+    match client_track.add_client(user.id(), user_name) {
         Ok(client_id) => Ok(format!("ID={}", client_id)),
         Err(_) => {
             match client_track.get_client_id_by_user_id(user.id()) {
