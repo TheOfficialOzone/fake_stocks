@@ -6,6 +6,7 @@ use std::sync::{Arc, RwLock};
 
 use httparse;
 
+use crate::users::ranking::Ranker;
 use crate::users::user_manager::UserManager;
 use crate::companies::company_manager::CompanyManager;
 use crate::data::data_saving::{SaveData, read_from_file};
@@ -419,6 +420,18 @@ fn login(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, use
     }
 }
 
+
+/// Loads the leaderboards
+fn load_leaderboards(buffer : &[u8; 1024], ranker : &Arc<RwLock<Ranker>>) -> Result<String, String> {
+    //Reads the ranker
+    let leaderboard = match ranker.read() {
+        Ok(ranker) => ranker,
+        Err(error) => return Err(error.to_string()),
+    };
+    //Gets the leaderboard data
+    leaderboard.get_data_range(0..1)
+}
+
 /// Parses text for whatever is in 'to_find'
 /// # Examples
 /// ```
@@ -447,13 +460,14 @@ fn parse_text(to_find : &String, to_parse : &String) -> Result<String, String> {
 
 
 /// Gets the response based off the HTTPS request
-fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>) -> Result<String, String> {
+fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>, ranker : &Arc<RwLock<Ranker>>) -> Result<String, String> {
     //All the possible request headers
     let load_page = b"GET / ";
     let load_login_page = b"GET /login.html";
     let load_stock_data = b"GET /stock_data";
     let load_stock_amount = b"GET /stock_amount";
     let load_cash_amount = b"GET /money";
+    let load_leaderboard = b"GET /leaderboard_data";
     let buy_stock_text = b"POST /buy_request";
     let sell_stock_text = b"POST /sell_request";
     let login_text = b"POST /login";
@@ -560,6 +574,10 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
         //Returns the users stock amount
         return Ok(user.money().to_string());
     } else
+    //Loads the leaderboards
+    if buffer.starts_with(load_leaderboard) {
+        return load_leaderboards(buffer, ranker);
+    } else
     //Sells a stock
     if buffer.starts_with(sell_stock_text){
         return sell_stock(buffer, client_tracker, company_manager, user_manager);
@@ -583,7 +601,7 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
 
 
 /// Handles all possible requests from a client
-pub fn handle_connection(mut stream : TcpStream, client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>) -> Result<(), String> {
+pub fn handle_connection(mut stream : TcpStream, client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>, ranker : &Arc<RwLock<Ranker>>) -> Result<(), String> {
     //The Buffer
     let mut buffer = [0; 1024];
 
@@ -598,7 +616,7 @@ pub fn handle_connection(mut stream : TcpStream, client_tracker : &Arc<RwLock<Cl
     println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
 
     //Gets the response text
-    let response_text_result = get_response(&buffer, client_tracker, company_manager, user_manager);
+    let response_text_result = get_response(&buffer, client_tracker, company_manager, user_manager, ranker);
 
     //Defaults to the invalid response
     let status_line;

@@ -51,6 +51,14 @@ impl User {
         self.money
     }
 
+    /// Gets the total value of a user
+    pub fn value(&self, company_manager : &CompanyManager) -> Result<f32, String> {
+        match self.wallet().total_value(company_manager) {
+            Ok(stock_val) => Ok(stock_val + self.money()),
+            Err(error) => Err(error),
+        }
+    }
+
     /// Gets the stock wallet from the user
     pub fn wallet(&self) -> &StockWallet {
         &self.stock_wallet
@@ -65,6 +73,12 @@ impl User {
     /// True on success, false if password is wrong
     pub fn try_password(&self, password : Password) -> bool {
         return self.password.compare(password);
+    }
+
+    //Resets a users earnings
+    pub fn reset(&mut self) {
+        self.money = 1000.0;
+        self.stock_wallet.reset();
     }
 
     /// Buys a stock
@@ -121,7 +135,7 @@ impl SaveData for User {
 }
 
 
- /// Prints the User to the screen
+/// Prints the User to the screen
 impl std::fmt::Display for User {
     /// Prints the Users information
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {

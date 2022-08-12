@@ -53,10 +53,9 @@ impl Company {
         &self.stock_price_history
     }
 
-    /// Setters
-
     /// Sets a new price for the Company
-    pub fn set_stock_price(&mut self, new_price : f32) -> Result<String, String>{
+    pub fn set_stock_price(&mut self, new_price : f32) -> Result<(), String>{
+        //Ensures the new price is valid
         if new_price < 0.0 { return Err(String::from("Price cannot be set to a negative value!")); }
 
         //Sets the new price
@@ -66,11 +65,19 @@ impl Company {
         self.stock_price_history.push(new_price);
 
         //Returns the valid result
-        Ok(format!("Price of {} was set to {}", self.name(), new_price))
+        Ok(())
     }
 
-    /// Purchasing stock
-    
+    /// Resets the companies stock history
+    pub fn reset_company(&mut self, new_price : f32) -> Result<(), String> {
+        //Ensures the new price is valid
+        if new_price < 0.0 { return Err(String::from("Price cannot be set to a negative value!")); }
+        //Clears the stock history
+        self.stock_price_history.clear();
+        //Sets the new price
+        self.set_stock_price(new_price)
+    }
+
     /// Purchases a stock from the company
     pub fn purchase_stock(&self, user : &mut User, buy_amount : usize) -> Result<(), String> {
         //Creates the bought stock

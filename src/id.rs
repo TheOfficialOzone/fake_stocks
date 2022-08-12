@@ -10,11 +10,12 @@ pub struct ID {
     id : usize,
 }
 
+static COUNTER : AtomicUsize = AtomicUsize::new(0);
+
+/// Default ID functions
 impl ID {
     /// Generates a new ID
     pub fn new<'a>() -> ID {
-        static COUNTER : AtomicUsize = AtomicUsize::new(0);
-
         let prev_val = COUNTER.fetch_add(1, Ordering::Relaxed);
         ID { id: prev_val }
     }

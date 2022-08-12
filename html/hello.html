@@ -81,6 +81,14 @@
         border-radius: 10px;
         float:center;
       }
+
+      .leaderboards {
+        display: inline-block;
+        text-align: center;
+        width: 100%;
+        height: 400px;
+        margin:0 auto; 
+      }
       
     </style>
   </head>
@@ -108,6 +116,15 @@
         <button class="sell_button"; type="button"; onclick="sell_stock('Apple', 5);">-5</button>
         <button class="stock_amount_display" id="apple_stock_amount">Loading</button>
       </div>
+    </div>
+
+    <div class="leaderboards"; id="leaderboard">
+      <table>
+        <tr>
+          <td>Ozone</td>
+          <td>100$</td>
+        </tr>
+      </table>
     </div>
 
     <!-- Getting Cookies-->
@@ -169,39 +186,39 @@
       //Buys a stock from a company
       // company (String)
       // amount (u_int)
-      function buy_stock(company, amount) {
-        //Ensures that there is enough stock to sell
-        let stock_amount = stock_amount_map.get(company.toLowerCase());
+      async function buy_stock(company, amount) {
+        // Attempts to sell the data
+        let response = await fetch("buy_request", {
+          method: 'POST',
+          body: amount + ',' + company,
+        });
 
-        //Make the request for the text info
-        let buy_request = new XMLHttpRequest();
-        buy_request.open("POST", "buy_request", true);
-
-        //When the response is recieved, update the HTML
-        buy_request.onload = function() {
-          //Updates the stock display
-          if (buy_request.responseText == "Bought") {
-            let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
-
-            //Updates the stock amount map
-            stock_amount_map.set(company.toLowerCase(), stock_amount_map.get(company.toLowerCase()) + amount);
-            
-            let current_value = parseInt(stock_display.textContent);
-            stock_display.textContent = current_value + amount;
-            //Updates the amount of cash and stock amount (Since it needs to recalculate the average stock price!)
-            update_money_amount();
-            update_stock_amount();
-          } 
+        // Ensures the status is valid
+        if(response.status != 200) {
+          console.log("Server error");
+          return;
         }
+        // Read response stream
+	      let text_data = await response.text();
 
-        //Send the request
-        buy_request.send(amount + ',' + company);
+        if (text_data == "Bought") {
+          let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
+
+          //Updates the stock amount map
+          stock_amount_map.set(company.toLowerCase(), stock_amount_map.get(company.toLowerCase()) + amount);
+          
+          let current_value = parseInt(stock_display.textContent);
+          stock_display.textContent = current_value + amount;
+          //Updates the amount of cash and stock amount (Since it needs to recalculate the average stock price!)
+          update_money_amount();
+          update_stock_amount();
+        } 
       }
 
       //Sells a stock from a company
       // company (String)
       // amount (u_int)
-      function sell_stock(company, amount) {
+      async function sell_stock(company, amount) {
         //Ensures that there is enough stock to sell
         let stock_amount = stock_amount_map.get(company.toLowerCase());
 
@@ -211,74 +228,69 @@
         //If there isn't enough stock, adjust it so we sell the remaining amount
         if (stock_amount < amount) { amount = stock_amount; }
 
-        //Make the request for the text info
-        let sell_request = new XMLHttpRequest();
-        sell_request.open("POST", "sell_request", true);
+        // Attempts to sell the data
+        let response = await fetch("sell_request", {
+          method: 'POST',
+          body: amount + ',' + company,
+        });
 
-        //When the response is recieved, update the HTML
-        sell_request.onload = function() {
-          //Updates the stock display
-          if (sell_request.responseText == "Sold") {
-            let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
-
-            let current_value = parseInt(stock_display.textContent);
-            stock_display.textContent = current_value - amount;
-            //Updates the amount of cash and stock amount (Since it needs to recalculate the average stock price!)
-            update_money_amount();
-            update_stock_amount();
-          } 
+        // Ensures the status is valid
+        if(response.status != 200) {
+          console.log("Server error");
+          return;
         }
+        // Read response stream
+	      let text_data = await response.text();
 
-        //Send the request
-        sell_request.send(amount + ',' + company);
+        if (text_data == "Sold") {
+          let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
+
+          let current_value = parseInt(stock_display.textContent);
+          stock_display.textContent = current_value - amount;
+          //Updates the amount of cash and stock amount (Since it needs to recalculate the average stock price!)
+          update_money_amount();
+          update_stock_amount();
+        } 
       }
 
       //Updates the amount of money
-      function update_money_amount() {
-        //Make the request for the text info
-        let money_file = new XMLHttpRequest();
-
-        //Opens the data file, (NOT ASYNC)
-        money_file.open("GET", "money", true);
-
-        money_file.onload = function() {
-          //Updates the stock display
-          if (money_file.responseText != null) {
-            let money_display = document.getElementById('money');
-            money_display.textContent = parseFloat(money_file.responseText).toFixed(2) + '$';
-          } 
+      async function update_money_amount() {
+        //Gets the money data
+        let response = await fetch("money");
+        // Ensures the status is valid
+        if(response.status != 200) {
+          console.log("Server error");
+          return;
         }
+        // Read response stream
+	      let text_data = await response.text();
 
-        //Send the file
-        money_file.send();
+        //Get the text, then draws the data
+        let money_display = document.getElementById('money');
+        money_display.textContent = parseFloat(text_data).toFixed(2) + '$';
       }
 
       //Updates the stock count
-      function update_stock_amount() {
-        //Make the request for the text info
-        let stock_file = new XMLHttpRequest();
-
-        //Opens the data file
-        stock_file.open("GET", "stock_amount", true);
-        console.log("Updating stock amount!");
-        //On load parse the data
-        stock_file.onload = function() {
-          parse_stock_amount(stock_file.responseText);
-          //Redraws the stock data
-          draw_stock_data();
+      async function update_stock_amount() {
+        //Gets the stock amount
+        let response = await fetch("stock_amount");
+        // Ensures the status is valid
+        if(response.status != 200) {
+          console.log("Server error");
+          return;
         }
+        // Read response stream
+	      let text_data = await response.text();
 
-        //Sends the file
-        stock_file.send();
+        //Get the text, then draws the data
+        parse_stock_amount(text_data);
+        draw_stock_data();
       }
-
 
       // Parses the stock amount string
       function parse_stock_amount(text) {
-
         //Splits the text by each ','
         let split_text = text.split('\n');
-        
         //For each stock in the text
         for (let i = 0; i < split_text.length; i++) {
           //Gets the stock
@@ -312,20 +324,20 @@
       }
 
       //Updates the stock data
-      function update_stock_data() {
-        //Make the request for the text info
-        let stock_data_request = new XMLHttpRequest();
-        //Opens the data file, (NOT ASYNC)
-        stock_data_request.open("GET", "stock_data", true);
-
-        stock_data_request.onload = function() {
-          //Get the text, then draws the data
-          stock_data_text = stock_data_request.responseText;
-          draw_stock_data();
+      async function update_stock_data() {
+        //Gets the stock data
+        let response = await fetch("stock_data");
+        // Ensures the status is valid
+        if(response.status != 200) {
+          console.log("Server error");
+          return;
         }
+        // Read response stream
+	      let text_data = await response.text();
 
-        //Send the file
-        stock_data_request.send();
+        //Get the text, then draws the data
+        stock_data_text = text_data;
+        draw_stock_data();
       }
 
       //Draws the stock data
@@ -438,6 +450,51 @@
         }
       }
       
+      async function update_leaderboards() {
+        //Gets the leaderboard data
+        let response = await fetch("leaderboard_data");
+        // Ensures the status is valid
+        if(response.status != 200) {
+          console.log("Server error");
+          return;
+        }
+        // Read response stream
+	      let text_data = await response.text();
+        //Draw the leaderboards
+        draw_leaderboards(text_data);
+      }
+
+      //Draws the leaderboards
+      // Format: 'Bob_200.3,Donkey_100.2,...'
+      function draw_leaderboards(text) {
+        //Leaderboards should not be empty
+        if (!text) return;
+
+        //Gets the leaderboards and clear it
+        let table = document.getElementById("leaderboard").getElementsByTagName('tbody')[0];
+        table.innerHTML = "";
+
+        //Splits the text by each ','
+        let split_text = text.split(',');
+        //Loops through each split
+        for (let i = 0; i < split_text.length; i++) {
+          //Splits the split by the _ (Now we have a (name, value) pair)
+          let name_money_pair = split_text[i].split('_');
+
+          //Gets the name and money
+          let name = name_money_pair[0];
+          let money = name_money_pair[1]+'$';
+
+          //Insert row to the i'th position
+          let row = table.insertRow(0);
+
+          let name_cell = row.insertCell(0);
+          let money_cell = row.insertCell(1);
+
+          name_cell.innerHTML = name;
+          money_cell.innerHTML = money;
+        }
+      }
     </script>
     
     <script>
@@ -447,6 +504,7 @@
         update_stock_amount();
         update_money_amount();
         update_stock_data();
+        update_leaderboards();
         
         //Will continue updating the stock data every 10s
         const stock_data_interval = setInterval(() => {

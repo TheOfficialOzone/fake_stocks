@@ -8,7 +8,8 @@ use crate::id::ID;
 use crate::companies::company::Company;
 use crate::companies::company_manager::CompanyManager;
 use crate::companies::stock::Stock;
-use crate::users::user::User;
+use crate::users::ranking::Ranker;
+use crate::users::user::{User, self};
 use crate::users::password::Password;
 use crate::users::user_manager::UserManager;
 use crate::data::data_saving::SaveData;
@@ -36,12 +37,19 @@ fn reset_company_manager(company_manager : &Arc<RwLock<CompanyManager>>) -> Resu
         Err(error) => return Err(error.to_string()),
     };
 
-    // Clears the company manager
-    company_man.clear();
 
-    //Creates apple and amazon
-    let _apple = company_man.new_company(String::from("Apple"), 200.0);
-    let _amazon = company_man.new_company(String::from("Amazon"), 200.0);
+
+    //Resets Apple
+    match company_man.get_company_by_name_mut(&String::from("Apple")) {
+        Ok(company) => { company.reset_company(200.0).unwrap(); company.id()},
+        Err(_error) => company_man.new_company(String::from("Apple"), 200.0),
+    };
+
+    //Resets Amazon
+    match company_man.get_company_by_name_mut(&String::from("Amazon")) {
+        Ok(company) => { company.reset_company(200.0).unwrap(); company.id()},
+        Err(_error) => company_man.new_company(String::from("Amazon"), 200.0),
+    };
 
     for _ in 0..50 {
         company_man.update();
@@ -54,6 +62,8 @@ fn main() {
     //Read / Write locks
     let company_manager_rw : Arc<RwLock<CompanyManager>> = Arc::new(RwLock::new(CompanyManager::new()));
     let user_manager_rw : Arc<RwLock<UserManager>> = Arc::new(RwLock::new(UserManager::new()));
+    let ranker_rw : Arc<RwLock<Ranker>> = Arc::new(RwLock::new(Ranker::new()));
+
 
     _ = reset_company_manager(&company_manager_rw);
 
@@ -68,7 +78,8 @@ fn main() {
 
     //The company manager / user manager shared across threads!
     let thread_company_manager : Arc<RwLock<CompanyManager>> = Arc::clone(&company_manager_rw);
-    let thread_user_manager : Arc<RwLock<UserManager>> = Arc::clone(&user_manager_rw); 
+    let thread_user_manager : Arc<RwLock<UserManager>> = Arc::clone(&user_manager_rw);
+    let thread_ranker : Arc<RwLock<Ranker>> = Arc::clone(&ranker_rw);
 
     // Spawns a thread to listen to web requests!
     thread::spawn(move || {
@@ -83,7 +94,7 @@ fn main() {
                 //Handles the streams connection
                 Ok(stream) => {
                     //Handles a connection
-                    match server::handle_connection(stream, &client_tracker, &thread_company_manager, &thread_user_manager) {
+                    match server::handle_connection(stream, &client_tracker, &thread_company_manager, &thread_user_manager, &thread_ranker) {
                         Err(error) => println!("Error: {}", error),
                         _ => (),
                     }
@@ -97,14 +108,38 @@ fn main() {
     let mut time = Instant::now();
     let mut reset_time = time;
 
-    const LOOP_DELAY : u64 = 20;
-    const RESET_DELAY : u64 = 86400;
+    const LOOP_DELAY : u64 = 1;
+    const RESET_DELAY : u64 = 10;
     //Forever loops as this will hopefully never crash :)
     loop {
         // Resets the company manager after 1 day
         if reset_time.elapsed().as_secs() >= RESET_DELAY {
             //Resets in [RESET_DELAY] seconds
             reset_time += Duration::new(RESET_DELAY, 0);
+
+            if let Ok(user_manager) = user_manager_rw.read() {
+                if let Ok(company_manager) = company_manager_rw.read() {
+                    //Make the ranker of each user
+                    match ranker_rw.write() {
+                        Ok(mut ranker) => 
+                        {
+                            match ranker.rank_users(&user_manager, &company_manager) {
+                                Err(error) => panic!("{}", error),
+                                _ => (),
+                            };
+                        },
+                        Err(error) => panic!("{}", error.to_string()),
+                    };
+                }
+            }
+
+            //Reset the user manager
+            match user_manager_rw.write() {
+                Ok(mut user_man) => user_man.reset_users(),
+                Err(error) => panic!("{}", error),
+            }
+
+            //Resets the stock history / prices of all the companies
             match reset_company_manager(&company_manager_rw) {
                 Err(error) => panic!("{}", error),
                 _ => (),

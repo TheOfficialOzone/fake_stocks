@@ -30,6 +30,14 @@ impl UserManager {
         user_id
     }
 
+    /// Resets all the users
+    pub fn reset_users(&mut self) {
+        //Loops through all the users
+        for user in self.users_mut() {
+            user.reset();
+        }
+    }
+
     /// Getters
 
     /// Gets the users from the User manager
@@ -40,17 +48,6 @@ impl UserManager {
     pub fn users_mut(&mut self) -> &mut Vec<User> {
         &mut self.users
     }
-
-    /// Gets the user at the specified Position
-    pub fn get_user(&self, pos : usize) -> &User {
-        &self.users[pos]
-    }
-
-    /// Gets the user at the specified Position mutably
-    pub fn get_user_mut(&mut self, pos : usize) -> &mut User {
-        &mut self.users[pos]
-    }
-
 
     /// Gets a user by their User name
     pub fn get_user_by_username(&self, username : &String) -> Result<&User, String> {

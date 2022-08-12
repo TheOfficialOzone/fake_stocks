@@ -57,7 +57,7 @@ impl CompanyManager {
             .collect();
 
         //Checks that there are results
-        if filtered.len() == 0 { return Err(String::from("No company was found!")); }
+        if filtered.len() == 0 { return Err(format!("No company with ID {} was found!", id)); }
         //Ensures there is only 1 result
         if filtered.len() != 1 { return Err(String::from("Multiple companies with the same name exist!"))}
 
@@ -82,10 +82,14 @@ impl CompanyManager {
         Ok(&filtered[0])
     }
 
-    /// Clears the company manager
-    pub fn clear(&mut self) {
-        self.companies.clear();
-        self.stored_save = String::from("");
+    /// Gets a company by it's name
+    pub fn get_company_by_name_mut(&mut self, name : &String) -> Result<&mut Company, String> {
+        for company in self.companies_mut() {
+            if company.name().eq(name) {
+                return Ok(company);
+            }
+        }
+        Err(format!("No Company with name {} found", name))
     }
 
     /// Updates the prices of the companies

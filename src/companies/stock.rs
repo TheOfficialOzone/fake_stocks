@@ -12,12 +12,16 @@ pub struct StockWallet {
 
 /// Default stock wallet functions
 impl StockWallet {
-
     /// Makes a new stock holder
     pub fn new() -> StockWallet {
         StockWallet {
             holders : Vec::new(),
         }
+    }
+
+    /// Clears the wallet
+    pub fn reset(&mut self) {
+        self.holders.clear();
     }
 
     /// Gets the amount of stock in the wallet
@@ -29,6 +33,20 @@ impl StockWallet {
         }
 
         stock_amount
+    }
+
+    /// Gets the total value from the stock wallet
+    pub fn total_value(&self, company_manager : &CompanyManager) -> Result<f32, String> {
+        let mut value : f32 = 0.0;
+
+        for stock in &self.holders {
+            match stock.value(company_manager) {
+                Ok(val) => value += val,
+                Err(error) => return Err(error),
+            }
+        }
+
+        Ok(value)
     }
 
     /// Adds a stock to the wallet
@@ -72,7 +90,7 @@ impl StockWallet {
         //Filters for all holders with the same ID
         let filtered : Vec<&StockHolder> = self.holders
             .iter()
-            .filter(|holder|  holder.company_id.equals(company_id))
+            .filter(|holder|  holder.company_id().equals(company_id))
             .collect();
 
         //Checks that there is a stock holder with the ID
@@ -171,6 +189,14 @@ impl StockHolder {
     /// Gets the average purchase price
     pub fn avg_purchase_price(&self) -> f32 {
         self.average_purchase_price
+    }
+
+    /// Gets the total value of the stocks
+    pub fn value(&self, company_manager : &CompanyManager) -> Result<f32, String> {
+        match company_manager.get_company_by_id(self.company_id()) {
+            Ok(company) => Ok(company.stock_price() * self.stock_amount() as f32),
+            Err(error) => Err(error),
+        }
     }
 
     /// Gets the amount of stocks
@@ -305,18 +331,18 @@ impl Stock {
         self.purchase_price
     }
 
-    /// Get the value of a stock
-    /// None, if no company with such value exists
-    pub fn value(&self, company_manager : &CompanyManager) -> Option<f32> {
-        //Gets the company by it's ID
-        let company_price = company_manager.get_company_by_id(self.company_id());
+    // /// Get the value of a stock
+    // /// None, if no company with such value exists
+    // pub fn value(&self, company_manager : &CompanyManager) -> Option<f32> {
+    //     //Gets the company by it's ID
+    //     let company_price = company_manager.get_company_by_id(self.company_id());
 
-        //Gets the companies price
-        match company_price {
-            Err(_) => return None,
-            Ok(company) => return Some(company.stock_price()),
-        }
-    }
+    //     //Gets the companies price
+    //     match company_price {
+    //         Err(_) => return None,
+    //         Ok(company) => return Some(company.stock_price()),
+    //     }
+    // }
 }
 
 /// Allows the stock to save data into a string
