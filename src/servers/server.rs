@@ -26,8 +26,8 @@ fn get_text_from_request(buffer : &[u8; 1024]) -> Result<String, String> {
         //If the size is found
         Ok(size) => {
             //Ensures the position is valid
-            match size {
-                httparse::Status::Complete(pos) => body_pos = pos,
+            body_pos = match size {
+                httparse::Status::Complete(body_pos) => body_pos,
                 httparse::Status::Partial => return Err(String::from("Buffer could not fit entire HTTP request")),
             }
         }, 
@@ -106,13 +106,12 @@ fn get_client_id_from_request(buffer : &[u8; 1024]) -> Result<ID, String> {
 }
 
 /// Sells a stock from a user
-fn sell_stock(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>) -> Result<String, String> {
+fn sell_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, company_manager_rw : &Arc<RwLock<CompanyManager>>, user_manager_rw : &Arc<RwLock<UserManager>>) -> Result<String, String> {
     //Gets the data from the request
-    let request_data;
-    match get_text_from_request(buffer) {
-        Ok(name) => request_data = name,
+    let request_data = match get_text_from_request(buffer) {
+        Ok(request_data) => request_data,
         Err(error) => return Err(error),
-    }
+    };
 
     //Splits the request
     let split_request : Vec<&str> = request_data.split(',').collect();
@@ -132,60 +131,49 @@ fn sell_stock(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>
     }
     
     //Gets the clients ID from the request
-    let client_id : ID;
-    match get_client_id_from_request(buffer) {
-        Ok(id) => client_id = id,
+    let client_id : ID = match get_client_id_from_request(buffer) {
+        Ok(client_id) => client_id,
         Err(error) => return Err(error),
-    }
+    };
 
     // Gets the users ID from the client tracker
-    let client_track;
-    match client_tracker.read() {
-        Ok(tracker) => client_track = tracker,
+    let client_tracker = match client_tracker_rw.read() {
+        Ok(client_tracker) => client_tracker,
         Err(error) => return Err(error.to_string()),
-    }
+    };
 
     //Gets the users ID
-    let user_id : ID;
-    match client_track.get_user_id_by_client_id(client_id) {
-        Ok(id) => user_id = id,
+    let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
+        Ok(user_id) => user_id,
         Err(error) => return Err(error),
-    }
+    };
 
     // Gets the user manager
-    let user_manager_lock = user_manager.write();
-
-    let mut user_manager;
-    match user_manager_lock {
-        Ok(user_man) => user_manager = user_man,
+    let mut user_manager = match user_manager_rw.write() {
+        Ok(user_manager) => user_manager,
         Err(error) => panic!("User manager lock was poisoned: {}", error),
-    }
+    };
 
     // Gets the user mutably
-    let user : &mut User;
-    match user_manager.get_user_by_id_mut(user_id) {
-        Ok(usr) => user = usr,
+    let user : &mut User = match user_manager.get_user_by_id_mut(user_id) {
+        Ok(user) => user,
         Err(error) => return Err(error),
-    }
+    };
 
     //Gets the company manager
-    let company_man;
-    match company_manager.read() {
-        Ok(comp_man) => company_man = comp_man,
+    let company_manager = match company_manager_rw.read() {
+        Ok(company_manager) => company_manager,
         Err(error) => panic!("User manager lock was poisoned: {}", error),
-    }
+    };
 
     //Gets the company
-    let company;
-    match company_man.get_company_by_name(&company_name) {
-        Ok(comp) => company = comp,
+    let company = match company_manager.get_company_by_name(&company_name) {
+        Ok(company) => company,
         Err(error) => return Err(error),
     };
     
     //Sells the users stock
-    let sell_result = user.sell_stock(&company_man, company.id(), sell_amount);
-
-    match sell_result {
+    match user.sell_stock(&company_manager, company.id(), sell_amount) {
         Ok(_) => return Ok(String::from("Sold")),
         Err(error) => return Err(error),
     }
@@ -219,11 +207,10 @@ fn buy_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker
     }
 
     //Gets the clients ID from the request
-    let client_id : ID;
-    match get_client_id_from_request(buffer) {
-        Ok(id) => client_id = id,
+    let client_id = match get_client_id_from_request(buffer) {
+        Ok(client_id) => client_id,
         Err(error) => return Err(error),
-    }
+    };
 
     // Gets the users ID from the client tracker
     let client_tracker = match client_tracker_rw.read() {
@@ -300,38 +287,33 @@ fn create_account(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTr
         Err(error) => return Ok(error.to_string()),
     };
 
-    // Validates that the user can be made
+    // Validates that the users info is valid
     {
         //The User name / Display name must be less than 20 characters long
         if user_name.len() > 20 { return Ok(String::from("User name must be less than 20 characters long")); }
         if display_name.len() > 20 { return Ok(String::from("Display name must be less than 20 characters long"))}
-
-        //Gets the user manager
-        let user_manager = match user_manager_rw.read() {
-            Ok(user_manager) => user_manager,
-            Err(error) => return Err(error.to_string()),
-        };
-
-        // Gets the user by the user name (Should not find one)
-        if let Ok(_user) = user_manager.get_user_by_username(&user_name) {
-            return Ok(format!("User name {} already in use!", user_name));
-        }
     }
     //We know have a valid User, so lets make one!
 
-    //Gets the user manager
+    // Gets the user manager
     let mut user_manager = match user_manager_rw.write() {
         Ok(user_manager) => user_manager,
         Err(error) => return Err(error.to_string()),
     };
 
-    //Gets the client tracker
+    // Gets the user by the user name (Should not find one)
+    // (MUST BE CHECKED WHILE WE HAVE THE WRITE LOCK TO AVOID ANY CONCURRENCY BS)
+    if let Ok(_user) = user_manager.get_user_by_username(&user_name) {
+        return Ok(format!("User name {} already in use!", user_name));
+    }
+
+    // Gets the client tracker
     let mut client_tracker = match client_tracker_rw.write() {
         Ok(client_tracker) => client_tracker,
         Err(error) => return Err(error.to_string()),
     };
 
-    //Adds the new User
+    // Adds the new User
     let user_id = user_manager.new_user(user_name.clone(), display_name.clone(), user_passord);
 
     //Now adds the new user to the tracker
@@ -344,11 +326,10 @@ fn create_account(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTr
 /// Logins the client to their account
 fn login(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, user_manager_rw : &Arc<RwLock<UserManager>>) -> Result<String, String> {
     //Gets the data from the request
-    let request_data;
-    match get_text_from_request(buffer) {
-        Ok(name) => request_data = name,
+    let request_data = match get_text_from_request(buffer) {
+        Ok(request_data) => request_data,
         Err(error) => return Err(error),
-    }
+    };
 
     //Gets the user name
     let user_name : String = match parse_text(&String::from("USERNAME:"), &request_data) {
@@ -364,7 +345,7 @@ fn login(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, 
 
     //Generates the password from the text
     let user_passord = match Password::from_text(&password) {
-        Ok(pass) => pass,
+        Ok(user_passord) => user_passord,
         Err(error) => return Err(error.to_string()),
     };
 
@@ -402,7 +383,6 @@ fn login(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, 
         },
     }
 }
-
 
 /// Loads the leaderboards
 fn load_leaderboards(ranker_rw : &Arc<RwLock<Ranker>>) -> Result<String, String> {
