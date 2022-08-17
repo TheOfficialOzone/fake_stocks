@@ -24,6 +24,7 @@ impl Password {
 
         //Splits the password by '-'
         let split_password : Vec<&str> = password.split("-").collect();
+        
         //Ensures the length is 6
         if split_password.len() != 6 { return Err(String::from("Length of password is not 6!"))}
 

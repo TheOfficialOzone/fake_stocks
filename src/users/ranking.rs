@@ -1,5 +1,7 @@
 
 
+use std::cmp::Ordering;
+
 use crate::{companies::company_manager::CompanyManager, data::data_saving::SaveData};
 use super::{user::User, user_manager::UserManager};
 
@@ -22,8 +24,21 @@ impl Rank {
     /// Makes a rank from a user and the company manager
     pub fn rank_from_user(user : &User, company_manager : &CompanyManager) -> Result<Rank, String> {
         match user.value(company_manager) {
-            Ok(value) => Ok(Self::new(user.user_name().clone(), value)),
+            Ok(value) => Ok(Self::new(user.display_name().clone(), value)),
             Err(error) => Err(error),
+        }
+    }
+
+    /// The standard comparason function
+    /// 
+    pub fn cmp(&self, other : &Rank) -> std::cmp::Ordering {
+        //Compares all the values
+        if other.value == self.value {
+            Ordering::Equal
+        } else if other.value > self.value {
+            Ordering::Greater
+        } else {
+            Ordering::Less
         }
     }
 }
@@ -70,23 +85,27 @@ impl Ranker {
             }
         }
 
-        println!("Current order:\n{:?}", self.order);
+        //Sorts the Users
+        self.order.sort_by(|a, b| a.cmp(b));
         Ok(())
     }
 
 
     /// Gets the ranks in string to send over the server
     /// Gets the ranks from the range specified
-    pub fn get_data_range(&self, range : std::ops::Range<usize>) -> Result<String, String> {
+    pub fn get_data_range(&self, mut range : std::ops::Range<usize>) -> Result<String, String> {
         // Keeps the range in the vectors bounds
-        if range.start >= self.order.len() { return Err(format!("Start of range is out of bounds {}", range.start)); }
-        if range.end > self.order.len() { return Err(format!("End of range is out of bounds {}", range.end)); }
+        if range.start >= self.order.len() { return Ok(String::new()); /*return Err(format!("Start of range is out of bounds {}", range.start));*/ }
+        if range.end > self.order.len() { range.end = self.order.len(); /*return Err(format!("End of range is out of bounds {}", range.end));*/ }
 
         //Bounds the range to the size of the array
         let mut data = String::new();
+
         //Loops through each rank in the range
-        for rank in &self.order[range] {
-            data.push_str(&rank.get_data());
+        for rank in self.order[range.clone()].iter().enumerate() {
+            data.push_str(&(rank.0 + range.start + 1).to_string());
+            data.push('_');
+            data.push_str(&rank.1.get_data());
             data.push(',');
         };
 

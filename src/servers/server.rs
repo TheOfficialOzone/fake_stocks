@@ -192,7 +192,7 @@ fn sell_stock(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>
 }
 
 /// Buys a stock mentioned by the buffer
-fn buy_stock(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>) -> Result<String, String> {    
+fn buy_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, company_manager_rw : &Arc<RwLock<CompanyManager>>, user_manager_rw : &Arc<RwLock<UserManager>>) -> Result<String, String> {    
     //Gets the data from the request
     let request_data;
     match get_text_from_request(buffer) {
@@ -209,8 +209,8 @@ fn buy_stock(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>,
     
     match split_request.len() {
         2 => {
-            match split_request[0].parse::<usize>(){
-                Ok(amount) => buy_amount = amount,
+            buy_amount = match split_request[0].parse::<usize>(){
+                Ok(buy_amount) => buy_amount,
                 Err(_error) => return Err(String::from("Error parsing through HTTP request!")),
             };
             company_name = split_request[1].to_string();
@@ -226,133 +226,123 @@ fn buy_stock(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>,
     }
 
     // Gets the users ID from the client tracker
-    let client_track;
-    match client_tracker.read() {
-        Ok(tracker) => client_track = tracker,
+    let client_tracker = match client_tracker_rw.read() {
+        Ok(client_tracker) => client_tracker,
         Err(error) => return Err(error.to_string()),
-    }
+    };
 
     //Gets the users ID
-    let user_id : ID;
-    match client_track.get_user_id_by_client_id(client_id) {
-        Ok(id) => user_id = id,
+    let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
+        Ok(user_id) => user_id,
         Err(error) => return Err(error),
-    }
+    };
     
     // Gets the user manager
-    let mut user_man;
-    match user_manager.write() {
-        Ok(usr_man) => user_man = usr_man,
+    let mut user_manager = match user_manager_rw.write() {
+        Ok(user_manager) => user_manager,
         Err(error) => panic!("User manager lock was poisoned: {}", error),
-    }
+    };
 
     // Gets the user mutably
-    let user : &mut User;
-    match user_man.get_user_by_id_mut(user_id) {
-        Ok(usr) => user = usr,
+    let user : &mut User = match user_manager.get_user_by_id_mut(user_id) {
+        Ok(user) => user,
         Err(error) => return Err(error),
-    }
+    };
 
     // Gets the company manager
-    let company_man;
-    match company_manager.read() {
-        Ok(comp_manager) => company_man = comp_manager,
+    let company_manager = match company_manager_rw.read() {
+        Ok(company_manager) => company_manager,
         Err(error) => panic!("User manager lock was poisoned: {}", error),
     };
 
     //Gets the company
-    let company;
-    match company_man.get_company_by_name(&company_name) {
-        Ok(comp) => company = comp,
+    let company= match company_manager.get_company_by_name(&company_name) {
+        Ok(company) => company,
         Err(error) => return Err(error),
     };
 
     //Buys the users stock
-    let purchase_result = company.purchase_stock(user, buy_amount);
-    match purchase_result {
+    match company.purchase_stock(user, buy_amount) {
         Ok(_) => return Ok(String::from("Bought")),
         Err(error) => return Err(error),
     };
 }
 
 /// Creates an Account for the user
-fn create_account(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, user_manager : &Arc<RwLock<UserManager>>) -> Result<String, String> {
+fn create_account(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, user_manager_rw : &Arc<RwLock<UserManager>>) -> Result<String, String> {
     //Gets the data from the request
-    let request_data;
-    match get_text_from_request(buffer) {
-        Ok(name) => request_data = name,
+    let request_data : String = match get_text_from_request(buffer) {
+        Ok(name) => name,
         Err(error) => return Err(error),
-    }
+    };
 
     //Gets the user name
-    let user_name : String;
-    match parse_text(&String::from("USERNAME:"), &request_data) {
-        Ok(name) => user_name = name,
+    let user_name : String = match parse_text(&String::from("USERNAME:"), &request_data) {
+        Ok(name) => name,
         Err(_error) => return Err(String::from("Could not parse username!")),
     };
 
     //Gets the display name
-    let display_name : String;
-    match parse_text(&String::from("DISPLAYNAME:"), &request_data) {
-        Ok(name) => display_name = name,
+    let display_name : String = match parse_text(&String::from("DISPLAYNAME:"), &request_data) {
+        Ok(name) => name,
         Err(_error) => return Err(String::from("Could not parse display name!")),
     };
 
     //Gets the password
-    let password : String;
-    match parse_text(&String::from("PASSWORD:"), &request_data) {
-        Ok(name) => password = name,
+    let password : String = match parse_text(&String::from("PASSWORD:"), &request_data) {
+        Ok(pass) => pass,
         Err(_error) => return Err(String::from("Could not parse password!")),
     };
 
-    let user_passord;
-    match Password::from_text(&password) {
-        Ok(pass) => user_passord = pass,
-        Err(error) => return Err(error.to_string()),
-    }
+    //Generates the password from the text
+    let user_passord : Password = match Password::from_text(&password) {
+        Ok(pass) => pass,
+        Err(error) => return Ok(error.to_string()),
+    };
 
-    println!("Username: {}\nDisplay name: {}\nPassword: {}", user_name, display_name, password);
     // Validates that the user can be made
     {
-        //Gets the client tracker
-        let client_track;
-        match client_tracker.read() {
-            Ok(client_tracker) => client_track = client_tracker,
-            Err(error) => return Err(error.to_string()),
-        }
+        //The User name / Display name must be less than 20 characters long
+        if user_name.len() > 20 { return Ok(String::from("User name must be less than 20 characters long")); }
+        if display_name.len() > 20 { return Ok(String::from("Display name must be less than 20 characters long"))}
 
-        if client_track.contains_user_name(&user_name) {
-            return Err(format!("Username {} already in use", user_name));
+        //Gets the user manager
+        let user_manager = match user_manager_rw.read() {
+            Ok(user_manager) => user_manager,
+            Err(error) => return Err(error.to_string()),
+        };
+
+        // Gets the user by the user name (Should not find one)
+        if let Ok(_user) = user_manager.get_user_by_username(&user_name) {
+            return Ok(format!("User name {} already in use!", user_name));
         }
     }
     //We know have a valid User, so lets make one!
 
     //Gets the user manager
-    let mut user_man;
-    match user_manager.write() {
-        Ok(user_manager) => user_man = user_manager,
+    let mut user_manager = match user_manager_rw.write() {
+        Ok(user_manager) => user_manager,
         Err(error) => return Err(error.to_string()),
-    }
+    };
 
     //Gets the client tracker
-    let mut client_track;
-    match client_tracker.write() {
-        Ok(client_tracker) => client_track = client_tracker,
+    let mut client_tracker = match client_tracker_rw.write() {
+        Ok(client_tracker) => client_tracker,
         Err(error) => return Err(error.to_string()),
-    }
+    };
 
     //Adds the new User
-    let user_id = user_man.new_user(user_name.clone(), display_name, user_passord);
+    let user_id = user_manager.new_user(user_name.clone(), display_name.clone(), user_passord);
 
     //Now adds the new user to the tracker
-    match client_track.add_client(user_id, user_name) {
+    match client_tracker.add_client(user_id, user_name, display_name) {
         Ok(new_id) => Ok(format!("ID={}", new_id)),
         Err(error) => Err(error),
     }
 }
 
 /// Logins the client to their account
-fn login(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, user_manager : &Arc<RwLock<UserManager>>) -> Result<String, String> {
+fn login(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, user_manager_rw : &Arc<RwLock<UserManager>>) -> Result<String, String> {
     //Gets the data from the request
     let request_data;
     match get_text_from_request(buffer) {
@@ -361,58 +351,51 @@ fn login(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, use
     }
 
     //Gets the user name
-    let user_name : String;
-    match parse_text(&String::from("USERNAME:"), &request_data) {
-        Ok(name) => user_name = name,
+    let user_name : String = match parse_text(&String::from("USERNAME:"), &request_data) {
+        Ok(name) => name,
         Err(_error) => return Err(String::from("Could not parse username!")),
     };
 
     //Gets the password
-    let password : String;
-    match parse_text(&String::from("PASSWORD:"), &request_data) {
-        Ok(name) => password = name,
+    let password : String = match parse_text(&String::from("PASSWORD:"), &request_data) {
+        Ok(pass) => pass,
         Err(_error) => return Err(String::from("Could not parse password!")),
     };
 
-    let user_passord;
-    match Password::from_text(&password) {
-        Ok(pass) => user_passord = pass,
+    //Generates the password from the text
+    let user_passord = match Password::from_text(&password) {
+        Ok(pass) => pass,
         Err(error) => return Err(error.to_string()),
     };
 
-    println!("Username: {}\nPassword: {}", user_name, password);
-
     //Gets the user manager
-    let user_man;
-    match user_manager.read() {
-        Ok(user_manager) => user_man = user_manager,
+    let user_manager = match user_manager_rw.read() {
+        Ok(user_manager) => user_manager,
         Err(error) => return Err(error.to_string()),
-    }
+    };
 
     //Checks that the account exists
-    let user : &User;
-    match user_man.get_user_by_username(&user_name) {
-        Ok(read_user) => user = read_user,
+    let user : &User = match user_manager.get_user_by_username(&user_name) {
+        Ok(read_user) => read_user,
         Err(error) => return Err(String::from(error)),
-    }
+    };
 
     //Ensures the password is correct
     if !user.try_password(user_passord) {
-        return Err(String::from("Incorrect password"));
+        return Ok(String::from("Incorrect password"));
     }
 
     //Gets the socket tracker
-    let mut client_track;
-    match client_tracker.write() {
-        Ok(client_tracker) => client_track = client_tracker,
+    let mut client_tracker = match client_tracker_rw.write() {
+        Ok(client_tracker) => client_tracker,
         Err(error) => return Err(error.to_string()),
     };
 
     //Adds the client to the socket tracker
-    match client_track.add_client(user.id(), user_name) {
+    match client_tracker.add_client(user.id(), user_name, user.display_name().clone()) {
         Ok(client_id) => Ok(format!("ID={}", client_id)),
         Err(_) => {
-            match client_track.get_client_id_by_user_id(user.id()) {
+            match client_tracker.get_client_id_by_user_id(user.id()) {
                 Ok(client_id) => Ok(format!("ID={}", client_id)),
                 Err(error) => Err(error),
             }
@@ -422,14 +405,14 @@ fn login(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, use
 
 
 /// Loads the leaderboards
-fn load_leaderboards(buffer : &[u8; 1024], ranker : &Arc<RwLock<Ranker>>) -> Result<String, String> {
+fn load_leaderboards(ranker_rw : &Arc<RwLock<Ranker>>) -> Result<String, String> {
     //Reads the ranker
-    let leaderboard = match ranker.read() {
+    let ranker = match ranker_rw.read() {
         Ok(ranker) => ranker,
         Err(error) => return Err(error.to_string()),
     };
     //Gets the leaderboard data
-    leaderboard.get_data_range(0..1)
+    ranker.get_data_range(0..20)
 }
 
 /// Parses text for whatever is in 'to_find'
@@ -450,6 +433,7 @@ fn parse_text(to_find : &String, to_parse : &String) -> Result<String, String> {
             //Adds the offset from the name
             pos += to_find.len();
             let found_text = &line[pos..];
+            //Returns the rest of the string
             return Ok(found_text.to_string());
         }
     };
@@ -506,7 +490,7 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
             Err(error) => return Err(error.to_string()),
         }
 
-        //client_track.
+        // Tracks the client
         let user_id : ID;
         match client_track.get_user_id_by_client_id(client_id) {
             Ok(id) => user_id = id,
@@ -576,7 +560,7 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
     } else
     //Loads the leaderboards
     if buffer.starts_with(load_leaderboard) {
-        return load_leaderboards(buffer, ranker);
+        return load_leaderboards(ranker);
     } else
     //Sells a stock
     if buffer.starts_with(sell_stock_text){
@@ -613,7 +597,7 @@ pub fn handle_connection(mut stream : TcpStream, client_tracker : &Arc<RwLock<Cl
     }
 
     //DEBUG: Prints the request!
-    println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
+    //println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
 
     //Gets the response text
     let response_text_result = get_response(&buffer, client_tracker, company_manager, user_manager, ranker);
@@ -623,14 +607,27 @@ pub fn handle_connection(mut stream : TcpStream, client_tracker : &Arc<RwLock<Cl
     let contents;
 
     match response_text_result {
+        //The response was ok
         Ok(response) => { 
             contents = response; 
             status_line = "HTTP/1.1 200 OK"; 
         },
-        Err(_error) => { 
-            println!("Error: {}", _error); 
-            contents = read_from_file("html/404.html").unwrap(); 
-            status_line = "HTTP/1.1 404 NOT FOUND"; 
+        //There was an error processing the request
+        Err(error) => { 
+            // If the ID is wrong make the log back in!
+            if error.starts_with("No client with ID") {
+                contents = "INVALID ID".to_string();
+                status_line = "HTTP/1.1 200 OK";
+            } else {
+                println!("Error: {}", error);
+                status_line = "HTTP/1.1 404 NOT FOUND";
+                
+                if error.starts_with("No client with ID") {
+                    contents = String::from("INVALID ID");
+                } else {
+                    contents = read_from_file("html/404.html").unwrap(); 
+                }
+            }
         },
     }
 

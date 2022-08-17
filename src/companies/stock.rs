@@ -86,20 +86,20 @@ impl StockWallet {
     }
 
     /// Gets a stock holder by the companies ID
-    fn get_stock_holder_by_id(&self, company_id : ID) -> Result<&StockHolder, String> {
-        //Filters for all holders with the same ID
-        let filtered : Vec<&StockHolder> = self.holders
-            .iter()
-            .filter(|holder|  holder.company_id().equals(company_id))
-            .collect();
+    // fn get_stock_holder_by_id(&self, company_id : ID) -> Result<&StockHolder, String> {
+    //     //Filters for all holders with the same ID
+    //     let filtered : Vec<&StockHolder> = self.holders
+    //         .iter()
+    //         .filter(|holder|  holder.company_id().equals(company_id))
+    //         .collect();
 
-        //Checks that there is a stock holder with the ID
-        if filtered.len() == 0 { return Err(String::from("No stock holder with the ID")); }
-        if filtered.len() != 1 { return Err(String::from("Multiple stock holders with the same ID!")); }
+    //     //Checks that there is a stock holder with the ID
+    //     if filtered.len() == 0 { return Err(String::from("No stock holder with the ID")); }
+    //     if filtered.len() != 1 { return Err(String::from("Multiple stock holders with the same ID!")); }
         
-        //Return the filtered stock holder
-        Ok(filtered[0])
-    }
+    //     //Return the filtered stock holder
+    //     Ok(filtered[0])
+    // }
 
     /// Gets a stock holder by the companies ID
     fn get_stock_holder_by_id_mut(&mut self, company_id : ID) -> Result<&mut StockHolder, String> {

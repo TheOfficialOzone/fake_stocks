@@ -9,7 +9,7 @@ use crate::companies::company::Company;
 use crate::companies::company_manager::CompanyManager;
 use crate::companies::stock::Stock;
 use crate::users::ranking::Ranker;
-use crate::users::user::{User, self};
+use crate::users::user::User;
 use crate::users::password::Password;
 use crate::users::user_manager::UserManager;
 use crate::data::data_saving::SaveData;
@@ -108,30 +108,14 @@ fn main() {
     let mut time = Instant::now();
     let mut reset_time = time;
 
-    const LOOP_DELAY : u64 = 1;
-    const RESET_DELAY : u64 = 10;
+    const LOOP_DELAY : u64 = 5;
+    const RESET_DELAY : u64 = 1000;
     //Forever loops as this will hopefully never crash :)
     loop {
         // Resets the company manager after 1 day
         if reset_time.elapsed().as_secs() >= RESET_DELAY {
             //Resets in [RESET_DELAY] seconds
             reset_time += Duration::new(RESET_DELAY, 0);
-
-            if let Ok(user_manager) = user_manager_rw.read() {
-                if let Ok(company_manager) = company_manager_rw.read() {
-                    //Make the ranker of each user
-                    match ranker_rw.write() {
-                        Ok(mut ranker) => 
-                        {
-                            match ranker.rank_users(&user_manager, &company_manager) {
-                                Err(error) => panic!("{}", error),
-                                _ => (),
-                            };
-                        },
-                        Err(error) => panic!("{}", error.to_string()),
-                    };
-                }
-            }
 
             //Reset the user manager
             match user_manager_rw.write() {
@@ -151,13 +135,30 @@ fn main() {
             //Adds 20 seconds to the time
             time += Duration::new(LOOP_DELAY,  0);
 
-            let mut company_man;
-            match company_manager_rw.write() {
-                Ok(company_manager) => company_man = company_manager,
+            let mut company_manager = match company_manager_rw.write() {
+                Ok(company_manager) => company_manager,
                 Err(error) => panic!("{}", error),
-            }
+            };
+
             //Update the company manager
-            company_man.update();
+            company_manager.update();
+            
+            //Reads the user manager
+            let user_manager = match user_manager_rw.read() {
+                Ok(user_manager) => user_manager,
+                Err(error) => panic!("{}", error),
+            };
+
+            // Updates the leaderboards
+            match ranker_rw.write() {
+                Ok(mut ranker) => {
+                    match ranker.rank_users(&user_manager, &company_manager) {
+                        Err(error) => panic!("{}", error),
+                        _ => (),
+                    };
+                },
+                Err(error) => panic!("{}", error.to_string()),
+            };
         }
     }
 }

@@ -93,7 +93,7 @@ impl UserManager {
             }
         }
 
-        Err(String::from("No user found"))
+        Err(format!("No User with id {} found", id.value()))
     }
 }
 
