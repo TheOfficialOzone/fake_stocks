@@ -442,7 +442,7 @@ fn parse_text(to_find : &String, to_parse : &String) -> Result<String, String> {
 
 
 /// Gets the response based off the HTTPS request
-fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>, ranker : &Arc<RwLock<Ranker>>, ranker_history_rw : &Arc<RwLock<RankerHistory>>) -> Result<String, String> {
+fn get_response(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, company_manager_rw : &Arc<RwLock<CompanyManager>>, user_manager_rw : &Arc<RwLock<UserManager>>, ranker_rw : &Arc<RwLock<Ranker>>, ranker_history_rw : &Arc<RwLock<RankerHistory>>) -> Result<String, String> {
     //All the possible request headers
     let load_page = b"GET / ";
     let load_login_page = b"GET /login.html";
@@ -466,51 +466,42 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
     } else
     //Load the stocks valuations
     if buffer.starts_with(load_stock_data) {
-        let company_manager_lock = company_manager.read();
-
-        match company_manager_lock {
-            Ok(company_man) => return Ok(company_man.get_data()),
+        match company_manager_rw.read() {
+            Ok(company_manager) => return Ok(company_manager.get_data()),
             Err(error) => panic!("Stock data mutex was poisoned: {}", error),
         }
     } else 
     //Load the amount of stocks a user has
     if buffer.starts_with(load_stock_amount) {
         //Gets the clients ID from the request
-        let client_id : ID;
-        match get_client_id_from_request(buffer) {
-            Ok(id) => client_id = id,
+        let client_id : ID = match get_client_id_from_request(buffer) {
+            Ok(id) => id,
             Err(error) => return Err(error),
-        }
+        };
 
         // Gets the users ID from the client tracker
-        let client_track;
-        match client_tracker.read() {
-            Ok(tracker) => client_track = tracker,
+        let client_tracker = match client_tracker_rw.read() {
+            Ok(client_tracker) => client_tracker,
             Err(error) => return Err(error.to_string()),
-        }
+        };
 
         // Tracks the client
-        let user_id : ID;
-        match client_track.get_user_id_by_client_id(client_id) {
-            Ok(id) => user_id = id,
+        let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
+            Ok(id) => id,
             Err(error) => return Err(error),
-        }
+        };
 
-        //Reads from the user manager
-        let user_manager_lock = user_manager.read();
-
-        let user_manager;
-        match user_manager_lock {
-            Ok(user_man) => user_manager = user_man,
+        //Reads the user manager
+        let user_manager = match user_manager_rw.read() {
+            Ok(user_manager) => user_manager,
             Err(error) => panic!("User manager lock was poisoned: {}", error),
-        }
+        };
 
         //Gets the user
-        let user : &User;
-        match user_manager.get_user_by_id(user_id) {
-            Ok(usr) => user = usr,
+        let user : &User = match user_manager.get_user_by_id(user_id) {
+            Ok(user) => user,
             Err(error) => return Err(error),
-        }
+        };
 
         //Returns the users stock amount
         return Ok(String::from(user.wallet().get_data()));
@@ -518,48 +509,41 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
     //Load the cash
     if buffer.starts_with(load_cash_amount) {
         //Gets the clients ID from the request
-        let client_id : ID;
-        match get_client_id_from_request(buffer) {
-            Ok(id) => client_id = id,
+        let client_id : ID = match get_client_id_from_request(buffer) {
+            Ok(id) => id,
             Err(error) => return Err(error),
-        }
+        };
 
         // Gets the users ID from the client tracker
-        let client_track;
-        match client_tracker.read() {
-            Ok(tracker) => client_track = tracker,
+        let client_tracker = match client_tracker_rw.read() {
+            Ok(client_tracker) => client_tracker,
             Err(error) => return Err(error.to_string()),
-        }
+        };
 
-        //client_track.
-        let user_id : ID;
-        match client_track.get_user_id_by_client_id(client_id) {
-            Ok(id) => user_id = id,
+        // Gets the users ID from the client ID
+        let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
+            Ok(id) => id,
             Err(error) => return Err(error),
-        }
+        };
 
-        //Reads from the user manager
-        let user_manager_lock = user_manager.read();
-
-        let user_manager;
-        match user_manager_lock {
-            Ok(user_man) => user_manager = user_man,
+        // Reads from the user manager
+        let user_manager = match user_manager_rw.read() {
+            Ok(user_manager) => user_manager,
             Err(error) => panic!("User manager lock was poisoned: {}", error),
-        }
+        };
 
-        //Gets the user
-        let user : &User;
-        match user_manager.get_user_by_id(user_id) {
-            Ok(usr) => user = usr,
+        // Gets the user
+        let user : &User = match user_manager.get_user_by_id(user_id) {
+            Ok(user) => user,
             Err(error) => return Err(error),
-        }
+        };
 
-        //Returns the users stock amount
+        // Returns the users stock amount
         return Ok(user.money().to_string());
     } else
     //Loads the leaderboards
     if buffer.starts_with(load_leaderboard) {
-        return load_new_leaderboards(ranker);
+        return load_new_leaderboards(ranker_rw);
     } else
     // Loads the old leaderboards
     if buffer.starts_with(load_old_leaderboard) {
@@ -567,18 +551,18 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
     }
     //Sells a stock
     if buffer.starts_with(sell_stock_text){
-        return sell_stock(buffer, client_tracker, company_manager, user_manager);
+        return sell_stock(buffer, client_tracker_rw, company_manager_rw, user_manager_rw);
     } else 
     //Buys a stock
     if buffer.starts_with(buy_stock_text) {
-        return buy_stock(buffer, client_tracker, company_manager, user_manager);
+        return buy_stock(buffer, client_tracker_rw, company_manager_rw, user_manager_rw);
     } else
     if buffer.starts_with(login_text) {
-        return login(buffer, client_tracker, user_manager);
+        return login(buffer, client_tracker_rw, user_manager_rw);
     } else
     //Creates an account
     if buffer.starts_with(create_account_text) {
-        return create_account(buffer, client_tracker, user_manager);
+        return create_account(buffer, client_tracker_rw, user_manager_rw);
     }
 
     //If we are here, we do not have any valid responses
@@ -589,7 +573,7 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
 
 /// Handles all possible requests from a client
 /// If a request is not pre-programmed, Error 404 is returned
-pub fn handle_connection(mut stream : TcpStream, client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>, ranker : &Arc<RwLock<Ranker>>, ranker_history_rw : &Arc<RwLock<RankerHistory>>) -> Result<(), String> {
+pub fn handle_connection(mut stream : TcpStream, client_tracker_rw : &Arc<RwLock<ClientTracker>>, company_manager_rw : &Arc<RwLock<CompanyManager>>, user_manager_rw : &Arc<RwLock<UserManager>>, ranker_rw : &Arc<RwLock<Ranker>>, ranker_history_rw : &Arc<RwLock<RankerHistory>>) -> Result<(), String> {
     //The Buffer
     let mut buffer = [0; 1024];
 
@@ -604,7 +588,7 @@ pub fn handle_connection(mut stream : TcpStream, client_tracker : &Arc<RwLock<Cl
     //println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
 
     //Gets the response text
-    let response_text_result = get_response(&buffer, client_tracker, company_manager, user_manager, ranker, ranker_history_rw);
+    let response_text_result = get_response(&buffer, client_tracker_rw, company_manager_rw, user_manager_rw, ranker_rw, ranker_history_rw);
 
     //Defaults to the invalid response
     let status_line;
