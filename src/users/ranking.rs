@@ -7,7 +7,7 @@ use super::{user::User, user_manager::UserManager};
 
 
 /// Holds the ranking of a user
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Rank {
     name : String,
     value : f32,
@@ -60,6 +60,7 @@ impl SaveData for Rank {
 }
 
 /// Ranks all users against one-another to determine
+#[derive(Clone, Debug)]
 pub struct Ranker {
     order : Vec<Rank>,
 }
@@ -71,10 +72,15 @@ impl Ranker {
         Ranker { order : Vec::new() }
     }
 
-    //Ranks all the users 
+    /// Clears the ranking
+    pub fn clear(&mut self) {
+        self.order.clear();
+    }
+
+    /// Ranks all the users 
     pub fn rank_users(&mut self, user_manager : &UserManager, company_manager : &CompanyManager) -> Result<(), String> {
         //Reset the rankings
-        self.order.clear();
+        self.clear();
         
         //Loop through every user
         for user in user_manager.users() {
@@ -89,7 +95,6 @@ impl Ranker {
         self.order.sort_by(|a, b| a.cmp(b));
         Ok(())
     }
-
 
     /// Gets the ranks in string to send over the server
     /// Gets the ranks from the range specified
@@ -116,3 +121,26 @@ impl Ranker {
     }
 }
 
+
+/// Tracks all history of the rankers
+pub struct RankerHistory {
+    history : Vec<Ranker>,
+}
+
+
+impl RankerHistory {
+    /// Makes a new Ranker
+    pub fn new() -> RankerHistory {
+        RankerHistory { history: Vec::new() }
+    }
+
+    /// Adds a ranker to the list
+    pub fn add(&mut self, ranker : Ranker) {
+        self.history.push(ranker);
+    }
+
+    /// Gets the last ranking in the history
+    pub fn get_recent(&self) -> Option<&Ranker> {
+        self.history.last()
+    }
+}

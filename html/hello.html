@@ -85,7 +85,7 @@
       .leaderboards {
         text-align: left;
         width: 100%;
-        height: 400px;
+        height: auto;
       }
 
       .leaderboard_pos {
@@ -131,12 +131,20 @@
       </div>
     </div>
 
-    <div class="leaderboards"; id="leaderboard">
-      <table style = "align-self: center; margin:0 auto; background-color: black;" width ="800px";>
+    
+    <div class="leaderboards"; id="new_leaderboard">
+      <p style="text-align:center; margin:0 auto;">Todays Leaderboards</p>
+      <table style="align-self: center; margin:0 auto; background-color: black;" width ="800px";>
         <tr></tr>
       </table>
     </div>
 
+    <div class="leaderboards"; id="old_leaderboard">
+      <p style="text-align:center; margin:0 auto;">Yesterdays Leaderboards</p>
+      <table style="align-self: center; margin:0 auto; background-color: black;" width ="800px";>
+        <tr></tr>
+      </table>
+    </div>
     <!-- Cookie function-->
     <script>
       function get_cookie(cname) {
@@ -246,6 +254,7 @@
         //Ensures there isn't an invalid ID
         validate_id_response(text_data);
 
+        //If the stock was bought
         if (text_data == "Bought") {
           let stock_display = document.getElementById(company.toLowerCase() + '_stock_amount');
 
@@ -526,17 +535,31 @@
         // Read response stream
 	      let text_data = await response.text();
         //Draw the leaderboards
-        draw_leaderboards(text_data);
+        draw_leaderboards("new_leaderboard", text_data);
+      }
+
+      async function update_old_leaderboards() {
+        //Gets the leaderboard data
+        let response = await fetch("old_leaderboard_data");
+        // Ensures the status is valid
+        if(response.status != 200) {
+          console.log("Server error");
+          return;
+        }
+        // Read response stream
+	      let text_data = await response.text();
+        //Draw the leaderboards
+        draw_leaderboards("old_leaderboard", text_data);
       }
 
       //Draws the leaderboards
       // String format: 'Bob_200.3,Donkey_100.2,...'
-      function draw_leaderboards(text) {
+      function draw_leaderboards(leaderboard_id, text) {
         //Leaderboards should not be empty
         if (!text) return;
 
         //Gets the leaderboards and clear it
-        let table = document.getElementById("leaderboard").getElementsByTagName('tbody')[0];
+        let table = document.getElementById(leaderboard_id).getElementsByTagName('tbody')[0];
         table.innerHTML = "";
 
         //Splits the text by each ','
@@ -577,10 +600,12 @@
         update_money_amount();
         update_stock_data();
         update_leaderboards();
+        update_old_leaderboards();
         
         //Will continue updating the stock data every 10s
         const stock_data_interval = setInterval(() => {
           update_stock_data();
+          update_stock_amount();
           update_leaderboards();
         }, 5000);
       }

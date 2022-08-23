@@ -4,6 +4,7 @@ use crate::id::ID;
 
 
 /// Stores a client by their IP and user ID
+#[derive(Clone)]
 struct ConnectedClient {
     client_id : ID,
     user_id : ID,
@@ -30,15 +31,20 @@ impl ConnectedClient {
 }
 
 /// Tracks the IPs of the user that are connected
+#[derive(Clone)]
 pub struct ClientTracker {
     clients : Vec<ConnectedClient>,
 }
-
 
 impl ClientTracker {
     /// Creates a new empty Socket tracker
     pub fn new() -> ClientTracker {
         ClientTracker { clients: Vec::new() }
+    }
+
+    /// Clears the client tracker
+    pub fn clear(&mut self) {
+        self.clients.clear()
     }
 
     /// Adds a client to the list

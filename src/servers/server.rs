@@ -6,7 +6,7 @@ use std::sync::{Arc, RwLock};
 
 use httparse;
 
-use crate::users::ranking::Ranker;
+use crate::users::ranking::{Ranker, RankerHistory};
 use crate::users::user_manager::UserManager;
 use crate::companies::company_manager::CompanyManager;
 use crate::data::data_saving::{SaveData, read_from_file};
@@ -358,7 +358,7 @@ fn login(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, 
     //Checks that the account exists
     let user : &User = match user_manager.get_user_by_username(&user_name) {
         Ok(read_user) => read_user,
-        Err(error) => return Err(String::from(error)),
+        Err(_error) => return Ok(format!("No user with the name {} exist", user_name)),
     };
 
     //Ensures the password is correct
@@ -384,15 +384,33 @@ fn login(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, 
     }
 }
 
-/// Loads the leaderboards
-fn load_leaderboards(ranker_rw : &Arc<RwLock<Ranker>>) -> Result<String, String> {
+/// Loads the new leaderboards
+fn load_new_leaderboards(ranker_rw : &Arc<RwLock<Ranker>>) -> Result<String, String> {
     //Reads the ranker
-    let ranker = match ranker_rw.read() {
-        Ok(ranker) => ranker,
-        Err(error) => return Err(error.to_string()),
-    };
+    match ranker_rw.read() {
+        Ok(ranker) => load_leaderboards(&ranker),
+        Err(error) => Err(error.to_string()),
+    }
+}
+
+/// Loads the old leaderboards
+fn load_old_leaderboards(ranker_history_rw : &Arc<RwLock<RankerHistory>>) -> Result<String, String>  {
+    //Reads the ranker
+    match ranker_history_rw.read() {
+        Ok(ranker_history) => {
+            match ranker_history.get_recent() {
+                Some(ranker) => load_leaderboards(ranker),
+                None => Err(String::from("No ranker in history!")),
+            }
+        },
+        Err(error) => Err(error.to_string()),
+    }
+}
+
+/// Loads the leaderboards from a ranker
+fn load_leaderboards(ranker : &Ranker) -> Result<String, String>  {
     //Gets the leaderboard data
-    ranker.get_data_range(0..20)
+    ranker.get_data_range(0..10)
 }
 
 /// Parses text for whatever is in 'to_find'
@@ -424,7 +442,7 @@ fn parse_text(to_find : &String, to_parse : &String) -> Result<String, String> {
 
 
 /// Gets the response based off the HTTPS request
-fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>, ranker : &Arc<RwLock<Ranker>>) -> Result<String, String> {
+fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>, ranker : &Arc<RwLock<Ranker>>, ranker_history_rw : &Arc<RwLock<RankerHistory>>) -> Result<String, String> {
     //All the possible request headers
     let load_page = b"GET / ";
     let load_login_page = b"GET /login.html";
@@ -432,6 +450,7 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
     let load_stock_amount = b"GET /stock_amount";
     let load_cash_amount = b"GET /money";
     let load_leaderboard = b"GET /leaderboard_data";
+    let load_old_leaderboard = b"GET /old_leaderboard_data";
     let buy_stock_text = b"POST /buy_request";
     let sell_stock_text = b"POST /sell_request";
     let login_text = b"POST /login";
@@ -540,8 +559,12 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
     } else
     //Loads the leaderboards
     if buffer.starts_with(load_leaderboard) {
-        return load_leaderboards(ranker);
+        return load_new_leaderboards(ranker);
     } else
+    // Loads the old leaderboards
+    if buffer.starts_with(load_old_leaderboard) {
+        return load_old_leaderboards(ranker_history_rw);
+    }
     //Sells a stock
     if buffer.starts_with(sell_stock_text){
         return sell_stock(buffer, client_tracker, company_manager, user_manager);
@@ -565,7 +588,8 @@ fn get_response(buffer : &[u8; 1024], client_tracker : &Arc<RwLock<ClientTracker
 
 
 /// Handles all possible requests from a client
-pub fn handle_connection(mut stream : TcpStream, client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>, ranker : &Arc<RwLock<Ranker>>) -> Result<(), String> {
+/// If a request is not pre-programmed, Error 404 is returned
+pub fn handle_connection(mut stream : TcpStream, client_tracker : &Arc<RwLock<ClientTracker>>, company_manager : &Arc<RwLock<CompanyManager>>, user_manager : &Arc<RwLock<UserManager>>, ranker : &Arc<RwLock<Ranker>>, ranker_history_rw : &Arc<RwLock<RankerHistory>>) -> Result<(), String> {
     //The Buffer
     let mut buffer = [0; 1024];
 
@@ -580,7 +604,7 @@ pub fn handle_connection(mut stream : TcpStream, client_tracker : &Arc<RwLock<Cl
     //println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
 
     //Gets the response text
-    let response_text_result = get_response(&buffer, client_tracker, company_manager, user_manager, ranker);
+    let response_text_result = get_response(&buffer, client_tracker, company_manager, user_manager, ranker, ranker_history_rw);
 
     //Defaults to the invalid response
     let status_line;

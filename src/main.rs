@@ -8,7 +8,7 @@ use crate::id::ID;
 use crate::companies::company::Company;
 use crate::companies::company_manager::CompanyManager;
 use crate::companies::stock::Stock;
-use crate::users::ranking::Ranker;
+use crate::users::ranking::{Ranker, RankerHistory};
 use crate::users::user::User;
 use crate::users::password::Password;
 use crate::users::user_manager::UserManager;
@@ -37,8 +37,6 @@ fn reset_company_manager(company_manager : &Arc<RwLock<CompanyManager>>) -> Resu
         Err(error) => return Err(error.to_string()),
     };
 
-
-
     //Resets Apple
     match company_man.get_company_by_name_mut(&String::from("Apple")) {
         Ok(company) => { company.reset_company(200.0).unwrap(); company.id()},
@@ -63,8 +61,10 @@ fn main() {
     let company_manager_rw : Arc<RwLock<CompanyManager>> = Arc::new(RwLock::new(CompanyManager::new()));
     let user_manager_rw : Arc<RwLock<UserManager>> = Arc::new(RwLock::new(UserManager::new()));
     let ranker_rw : Arc<RwLock<Ranker>> = Arc::new(RwLock::new(Ranker::new()));
+    let ranker_history_rw : Arc<RwLock<RankerHistory>> = Arc::new(RwLock::new(RankerHistory::new()));
+    let client_tracker_rw : Arc<RwLock<ClientTracker>> = Arc::new(RwLock::new(ClientTracker::new()));
 
-
+    //Resets the company manager
     _ = reset_company_manager(&company_manager_rw);
 
     //Web Listener testing
@@ -80,12 +80,10 @@ fn main() {
     let thread_company_manager : Arc<RwLock<CompanyManager>> = Arc::clone(&company_manager_rw);
     let thread_user_manager : Arc<RwLock<UserManager>> = Arc::clone(&user_manager_rw);
     let thread_ranker : Arc<RwLock<Ranker>> = Arc::clone(&ranker_rw);
-
+    let thread_ranker_history : Arc<RwLock<RankerHistory>> = Arc::clone(&ranker_history_rw);
+    let thread_client_tracker : Arc<RwLock<ClientTracker>> = Arc::clone(&client_tracker_rw);
     // Spawns a thread to listen to web requests!
     thread::spawn(move || {
-        //Makes a new socket_tracker
-        let client_tracker : Arc<RwLock<ClientTracker>> = Arc::new(RwLock::new(ClientTracker::new()));
-
         for stream in listener.incoming() {
             //Checks for a stream
             let stream_result = stream;
@@ -94,7 +92,7 @@ fn main() {
                 //Handles the streams connection
                 Ok(stream) => {
                     //Handles a connection
-                    match server::handle_connection(stream, &client_tracker, &thread_company_manager, &thread_user_manager, &thread_ranker) {
+                    match server::handle_connection(stream, &thread_client_tracker, &thread_company_manager, &thread_user_manager, &thread_ranker, &thread_ranker_history) {
                         Err(error) => println!("Error: {}", error),
                         _ => (),
                     }
@@ -109,24 +107,43 @@ fn main() {
     let mut reset_time = time;
 
     const LOOP_DELAY : u64 = 5;
-    const RESET_DELAY : u64 = 1000;
+    const RESET_DELAY : u64 = 60;
+
     //Forever loops as this will hopefully never crash :)
     loop {
         // Resets the company manager after 1 day
         if reset_time.elapsed().as_secs() >= RESET_DELAY {
-            //Resets in [RESET_DELAY] seconds
+            // Resets in [RESET_DELAY] seconds
             reset_time += Duration::new(RESET_DELAY, 0);
 
-            //Reset the user manager
+            // Reset the user manager
             match user_manager_rw.write() {
                 Ok(mut user_man) => user_man.reset_users(),
                 Err(error) => panic!("{}", error),
             }
 
-            //Resets the stock history / prices of all the companies
+            // Resets the stock history / prices of all the companies
             match reset_company_manager(&company_manager_rw) {
                 Err(error) => panic!("{}", error),
                 _ => (),
+            }
+
+            //Clears the client tracker (Everyone must re-login)
+            match client_tracker_rw.write() {
+                Ok(mut client_tracker) => client_tracker.clear(),
+                Err(error) => println!("{}", error),
+            }
+
+            // Writes the old ranker to the ranker
+            // And clears the new ranker
+            match ranker_history_rw.write() {
+                Ok(mut history) => {
+                    match ranker_rw.write() {
+                        Ok(mut ranker) => { history.add(ranker.clone()); ranker.clear()},
+                        Err(error) => println!("{}", error),
+                    }
+                },
+                Err(error) => println!("{}", error),
             }
         }
         
@@ -140,10 +157,10 @@ fn main() {
                 Err(error) => panic!("{}", error),
             };
 
-            //Update the company manager
+            // Update the company manager
             company_manager.update();
             
-            //Reads the user manager
+            // Reads the user manager
             let user_manager = match user_manager_rw.read() {
                 Ok(user_manager) => user_manager,
                 Err(error) => panic!("{}", error),
