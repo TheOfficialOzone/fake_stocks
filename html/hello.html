@@ -194,7 +194,7 @@
 
       //Ensures they have a cookie before accessing the website
       if (get_cookie("ID") == "") {
-        location.href = "/login.html";
+        logout();
       }
 
       //Holds all the companies
@@ -538,6 +538,7 @@
         draw_leaderboards("new_leaderboard", text_data);
       }
 
+      //Updates the old leaderboards
       async function update_old_leaderboards() {
         //Gets the leaderboard data
         let response = await fetch("old_leaderboard_data");

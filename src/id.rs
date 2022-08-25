@@ -37,11 +37,11 @@ impl ID {
 
 
     /// Makes an ID from a string
-    /// Expects it in the form of "ID:654"
-    pub fn from_string(str : &String) -> Result<ID, String> {
+    /// Expects it in the form of "ID=654"
+    pub fn from_string(string : &String) -> Result<ID, String> {
         //Checks that there is an ID
-        if str.contains("ID=") && str.len() > 3  {
-            let value_str = &str[3..].to_string();
+        if string.contains("ID=") && string.len() > 3  {
+            let value_str = &string[3..].to_string();
 
             //Error parsing the ID
             match value_str.parse::<usize>() {

@@ -5,7 +5,7 @@ use crate::id::ID;
 
 /// Stores a client by their IP and user ID
 #[derive(Clone)]
-struct ConnectedClient {
+pub struct ConnectedClient {
     client_id : ID,
     user_id : ID,
     user_name : String,
@@ -17,6 +17,21 @@ impl ConnectedClient {
     /// Creates a new Connected client from the IP and user_id
     fn new(user_id : ID, user_name : String, display_name : String) -> ConnectedClient {
         ConnectedClient { client_id : ID::new(), user_id, user_name, display_name }
+    }
+
+    /// Gets the client ID
+    pub fn client_id(&self) -> ID {
+        self.client_id
+    }
+
+    /// Gets the user ID
+    pub fn user_id(&self) -> ID {
+        self.user_id
+    }
+
+    /// Gets the username
+    pub fn user_name(&self) -> &String {
+        &self.user_name
     }
 
     /// Checks if the IDs are identical
@@ -55,11 +70,27 @@ impl ClientTracker {
         if self.contains_user_name(&user_name) { return Err(format!("User name already in use: {}", user_name)); }
         if self.contains_display_name(&display_name) { return Err(format!("Display name already in use: {}", display_name)); }
 
+        //Makes the new client
         let new_client = ConnectedClient::new(user_id, user_name, display_name);
+        //Stores the ID to return
         let stored_id = new_client.client_id;
         self.clients.push(new_client);
 
         Ok(stored_id)
+    }
+
+
+    /// Gets the client by their ID
+    pub fn get_client_by_client_id(&self, client_id : ID) -> Result<&ConnectedClient, String> {
+        // Filters for the remaining client
+        let filtered : Vec<&ConnectedClient> = self.clients.iter()
+            .filter(|client| client.client_id().equals(client_id))
+            .collect();
+
+        match filtered.len() {
+            0 => Err(format!("No client with the ID {} exists.", client_id)),
+            _ => Ok(filtered[0]),
+        }
     }
 
     /// Gets a users ID from the clients ID

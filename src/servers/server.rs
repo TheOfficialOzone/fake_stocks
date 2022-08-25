@@ -12,6 +12,8 @@ use crate::companies::company_manager::CompanyManager;
 use crate::data::data_saving::{SaveData, read_from_file};
 use crate::{Password, ClientTracker, User, ID};
 
+use super::client_tracker;
+
 /// Gets the sent text from a request
 /// Returns a String with the bodies text!
 fn get_text_from_request(buffer : &[u8; 1024]) -> Result<String, String> {
@@ -77,33 +79,100 @@ fn get_cookie_from_request(buffer : &[u8; 1024]) -> Result<String, String> {
     }
 }
 
-
-/// Gets the clients ID from an HTTP Request
-fn get_client_id_from_request(buffer : &[u8; 1024]) -> Result<ID, String> {
+/// Gets the Users ID from a request
+fn get_user_id_from_request(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>) -> Result<ID, String> {
     // Gets the cookie text
-    let mut cookie_text;
-    match get_cookie_from_request(buffer) {
-        Ok(text) => cookie_text = text,
+    let mut cookie_text = match get_cookie_from_request(buffer) {
+        Ok(cookie_text) => cookie_text,
         Err(error) => return Err(error),
     };
 
     //Retains only text, no whitespace
     cookie_text.retain(|c| !c.is_whitespace());
 
-    //Split the text by ';'
-    let cookie_split = cookie_text.split(";");
-
-    //Loop through each split
-    for str in cookie_split {
-        let text = str.to_string();
-        //We have the ID
-        if text.contains("ID=") {
-            return ID::from_string(&text);
-        }
+    //Finds the comma position
+    let comma_pos = match cookie_text.find(',') {
+        Some(x) => x,
+        None => return Err(format!("Error parsing cookie header: {}", cookie_text)),
     };
 
-    Err(String::from("Client ID was not found!"))
+    //Gets the ID position
+    let id_pos = match cookie_text.find("ID=") {
+        Some(x) => x,
+        None => return Err(format!("Cookie does not contain the clients id: {}", cookie_text))
+    };
+
+    // Gets the ID from the string
+    let id_str = &cookie_text[id_pos..comma_pos].to_string();
+
+    //Gets the ID
+    let client_id = match ID::from_string(id_str) {
+        Ok(id) => id,
+        Err(error) => return Err(error),
+    };
+
+    //Finds the usernames position
+    let username_pos = match cookie_text.find("USERNAME=") {
+        Some(x) => x + 9,
+        None => return Err(format!("Cookie does not contain the clients username: {}", cookie_text)),
+    };
+
+    //Has the username
+    let username = &cookie_text[username_pos..].to_string();
+    println!("Username: {}", username);
+
+    //Now that we have the username and ID we can check if they exist in the handler
+    let client_tracker = match client_tracker_rw.read() {
+        Ok(client_tracker) => client_tracker,
+        Err(error) => return Err(format!("Cookie parsing error: {}", error)),
+    };
+
+    //Gets the client
+    let client = match client_tracker.get_client_by_client_id(client_id) {
+        Ok(client) => client,
+        Err(error) => return Err(error),
+    };
+
+    //Checks if the name matches
+    if client.user_name().eq(username) {
+        return Ok(client.user_id())
+    }
+
+    Err(format!("Cookie header could not be parsed properly: {}", cookie_text))
 }
+
+// /// Gets the clients ID from an HTTP Request
+// fn get_client_id_from_request(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>) -> Result<ID, String> {
+//     // Gets the cookie text
+//     let mut cookie_text = match get_cookie_from_request(buffer) {
+//         Ok(cookie_text) => cookie_text,
+//         Err(error) => return Err(error),
+//     };
+
+//     //Retains only text, no whitespace
+//     cookie_text.retain(|c| !c.is_whitespace());
+
+//     //Split the text by ';'
+//     let cookie_split = cookie_text.split(";");
+
+//     //Loop through each split
+//     for str in cookie_split {
+
+//         let text = str.to_string();
+//         if text.contains("ID=") {
+//         // Seperates the remaining cookie by the ','
+//         let split_str = str.split(',');
+
+//         }
+        
+//         //We have the ID
+        
+//         //    return ID::from_string(&text);
+//         //}
+//     };
+
+//     Err(String::from("Client ID was not found!"))
+// }
 
 /// Sells a stock from a user
 fn sell_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, company_manager_rw : &Arc<RwLock<CompanyManager>>, user_manager_rw : &Arc<RwLock<UserManager>>) -> Result<String, String> {
@@ -131,21 +200,9 @@ fn sell_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracke
     }
     
     //Gets the clients ID from the request
-    let client_id : ID = match get_client_id_from_request(buffer) {
+    let user_id : ID = match get_user_id_from_request(buffer, client_tracker_rw) {
         Ok(client_id) => client_id,
         Err(error) => return Err(error),
-    };
-
-    // Gets the users ID from the client tracker
-    let client_tracker = match client_tracker_rw.read() {
-        Ok(client_tracker) => client_tracker,
-        Err(error) => return Err(error.to_string()),
-    };
-
-    //Gets the users ID
-    let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
-        Ok(user_id) => user_id,
-        Err(_error) => return Ok(String::from("INVALID ID")),
     };
 
     // Gets the user manager
@@ -207,21 +264,9 @@ fn buy_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker
     }
 
     //Gets the clients ID from the request
-    let client_id = match get_client_id_from_request(buffer) {
+    let user_id = match get_user_id_from_request(buffer, client_tracker_rw) {
         Ok(client_id) => client_id,
         Err(error) => return Err(error),
-    };
-
-    // Gets the users ID from the client tracker
-    let client_tracker = match client_tracker_rw.read() {
-        Ok(client_tracker) => client_tracker,
-        Err(error) => return Err(error.to_string()),
-    };
-
-    //Gets the users ID
-    let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
-        Ok(user_id) => user_id,
-        Err(_error) => return Ok(String::from("INVALID ID")),
     };
     
     // Gets the user manager
@@ -293,7 +338,6 @@ fn create_account(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTr
         if user_name.len() > 20 { return Ok(String::from("User name must be less than 20 characters long")); }
         if display_name.len() > 20 { return Ok(String::from("Display name must be less than 20 characters long"))}
     }
-    //We know have a valid User, so lets make one!
 
     // Gets the user manager
     let mut user_manager = match user_manager_rw.write() {
@@ -301,11 +345,11 @@ fn create_account(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTr
         Err(error) => return Err(error.to_string()),
     };
 
-    // Gets the user by the user name (Should not find one)
-    // (MUST BE CHECKED WHILE WE HAVE THE WRITE LOCK TO AVOID ANY CONCURRENCY BS)
-    if let Ok(_user) = user_manager.get_user_by_username(&user_name) {
-        return Ok(format!("User name {} already in use!", user_name));
-    }
+    // Adds the new User
+    let user_id = match user_manager.new_user(user_name.clone(), display_name.clone(), user_passord) {
+        Ok(id) => id,
+        Err(error) => return Ok(error),
+    };
 
     // Gets the client tracker
     let mut client_tracker = match client_tracker_rw.write() {
@@ -313,12 +357,9 @@ fn create_account(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTr
         Err(error) => return Err(error.to_string()),
     };
 
-    // Adds the new User
-    let user_id = user_manager.new_user(user_name.clone(), display_name.clone(), user_passord);
-
     //Now adds the new user to the tracker
-    match client_tracker.add_client(user_id, user_name, display_name) {
-        Ok(new_id) => Ok(format!("ID={}", new_id)),
+    match client_tracker.add_client(user_id, user_name.clone(), display_name) {
+        Ok(new_id) => Ok(format!("ID={},USERNAME={}", new_id, user_name)),
         Err(error) => Err(error),
     }
 }
@@ -373,11 +414,11 @@ fn login(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, 
     };
 
     //Adds the client to the socket tracker
-    match client_tracker.add_client(user.id(), user_name, user.display_name().clone()) {
-        Ok(client_id) => Ok(format!("ID={}", client_id)),
+    match client_tracker.add_client(user.id(), user_name.clone(), user.display_name().clone()) {
+        Ok(client_id) => Ok(format!("ID={},USERNAME={}", client_id, user_name)),
         Err(_) => {
             match client_tracker.get_client_id_by_user_id(user.id()) {
-                Ok(client_id) => Ok(format!("ID={}", client_id)),
+                Ok(client_id) => Ok(format!("ID={},USERNAME={}", client_id, user_name)),
                 Err(error) => Err(error),
             }
         },
@@ -474,21 +515,9 @@ fn get_response(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTrac
     //Load the amount of stocks a user has
     if buffer.starts_with(load_stock_amount) {
         //Gets the clients ID from the request
-        let client_id : ID = match get_client_id_from_request(buffer) {
+        let user_id : ID = match get_user_id_from_request(buffer, client_tracker_rw) {
             Ok(id) => id,
             Err(error) => return Err(error),
-        };
-
-        // Gets the users ID from the client tracker
-        let client_tracker = match client_tracker_rw.read() {
-            Ok(client_tracker) => client_tracker,
-            Err(error) => return Err(error.to_string()),
-        };
-
-        // Tracks the client
-        let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
-            Ok(id) => id,
-            Err(_error) => return Ok(String::from("INVALID ID")),
         };
 
         //Reads the user manager
@@ -509,21 +538,9 @@ fn get_response(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTrac
     //Load the cash
     if buffer.starts_with(load_cash_amount) {
         //Gets the clients ID from the request
-        let client_id : ID = match get_client_id_from_request(buffer) {
+        let user_id : ID = match get_user_id_from_request(buffer, client_tracker_rw) {
             Ok(id) => id,
             Err(error) => return Err(error),
-        };
-
-        // Gets the users ID from the client tracker
-        let client_tracker = match client_tracker_rw.read() {
-            Ok(client_tracker) => client_tracker,
-            Err(error) => return Err(error.to_string()),
-        };
-
-        // Gets the users ID from the client ID
-        let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
-            Ok(id) => id,
-            Err(_error) => return Ok(String::from("INVALID ID")),
         };
 
         // Reads from the user manager
@@ -578,11 +595,10 @@ pub fn handle_connection(mut stream : TcpStream, client_tracker_rw : &Arc<RwLock
     let mut buffer = [0; 1024];
 
     //Reads the Stream
-    let read_result = stream.read(&mut buffer);
-    match read_result {
+    match stream.read(&mut buffer) {
         Err(error) => return Err(error.to_string()),
         _ => (),
-    }
+    };
 
     //DEBUG: Prints the request!
     //println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
@@ -596,12 +612,13 @@ pub fn handle_connection(mut stream : TcpStream, client_tracker_rw : &Arc<RwLock
 
     match response_text_result {
         //The response was ok
-        Ok(response) => { 
+        Ok(response) => {
             contents = response; 
             status_line = "HTTP/1.1 200 OK"; 
         },
         //There was an error processing the request
         Err(error) => {
+            println!("Error: {}", error);
             // If the ID is wrong make the log back in!
             if error.starts_with("No client with ID") {
                 contents = "INVALID ID".to_string();

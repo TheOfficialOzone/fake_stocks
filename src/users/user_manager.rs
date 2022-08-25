@@ -20,14 +20,18 @@ impl UserManager {
     }
 
     /// Makes a new User
-    pub fn new_user(&mut self, user_name : String, display_name : String, password : Password) -> ID {
+    pub fn new_user(&mut self, user_name : String, display_name : String, password : Password) -> Result<ID, String> {
+        // Verifies that no user with the same user name or display name exist
+        if let Ok(_user) = self.get_user_by_username(&user_name) { return Err(format!("User with user name {} already exists!", user_name)); }
+        if let Ok(_user) = self.get_user_by_display_name(&display_name) { return Err(format!("User with display name {} already exists!", display_name)); }
+        
         //Generates the new user
         let new_user = User::new(user_name, display_name, password);
         //Copies the ID for return
         let user_id = new_user.id();
         self.users.push(new_user);
 
-        user_id
+        Ok(user_id)
     }
 
     /// Resets all the users
@@ -45,6 +49,7 @@ impl UserManager {
         &self.users
     }
 
+    /// Gets the users mutably from the User manager
     pub fn users_mut(&mut self) -> &mut Vec<User> {
         &mut self.users
     }
@@ -62,6 +67,24 @@ impl UserManager {
         //Checks that the lengths are correct
         if filtered.len() == 0 { return Err(format!("No User with name {} found", username)); }
         if filtered.len() != 1 { return Err(format!("Multiple Users with Name {} found", username)); }
+
+        //Returns the remaining user
+        Ok(filtered[0])
+    }
+
+    /// Gets a user by their Display name
+    pub fn get_user_by_display_name(&self, display_name : &String) -> Result<&User, String> {
+        let users = self.users();
+
+        //Filters for identical user names
+        let filtered : Vec<&User> = users
+            .iter()
+            .filter(|user| user.display_name().eq(display_name))
+            .collect();
+        
+        //Checks that the lengths are correct
+        if filtered.len() == 0 { return Err(format!("No User with name {} found", display_name)); }
+        if filtered.len() != 1 { return Err(format!("Multiple Users with Name {} found", display_name)); }
 
         //Returns the remaining user
         Ok(filtered[0])

@@ -107,7 +107,7 @@ fn main() {
     let mut reset_time = time;
 
     const LOOP_DELAY : u64 = 5;
-    const RESET_DELAY : u64 = 60;
+    const RESET_DELAY : u64 = 600;
 
     //Forever loops as this will hopefully never crash :)
     loop {
