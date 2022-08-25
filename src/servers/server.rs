@@ -21,7 +21,7 @@ fn get_text_from_request(buffer : &[u8; 1024]) -> Result<String, String> {
     let mut request = httparse::Request::new(&mut headers);
 
     //Parses for the body's position
-    let body_pos ;
+    let body_pos;
     match request.parse(buffer) {
         //If the size is found
         Ok(size) => {
