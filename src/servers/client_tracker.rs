@@ -88,7 +88,7 @@ impl ClientTracker {
             .collect();
 
         match filtered.len() {
-            0 => Err(format!("No client with the ID {} exists.", client_id)),
+            0 => Err(format!("No client with ID {} exists.", client_id)),
             _ => Ok(filtered[0]),
         }
     }

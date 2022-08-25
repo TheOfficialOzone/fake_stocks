@@ -12,8 +12,6 @@ use crate::companies::company_manager::CompanyManager;
 use crate::data::data_saving::{SaveData, read_from_file};
 use crate::{Password, ClientTracker, User, ID};
 
-use super::client_tracker;
-
 /// Gets the sent text from a request
 /// Returns a String with the bodies text!
 fn get_text_from_request(buffer : &[u8; 1024]) -> Result<String, String> {
@@ -105,7 +103,7 @@ fn get_user_id_from_request(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLoc
     // Gets the ID from the string
     let id_str = &cookie_text[id_pos..comma_pos].to_string();
 
-    //Gets the ID
+    //Gets the Client ID
     let client_id = match ID::from_string(id_str) {
         Ok(id) => id,
         Err(error) => return Err(error),
@@ -119,7 +117,6 @@ fn get_user_id_from_request(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLoc
 
     //Has the username
     let username = &cookie_text[username_pos..].to_string();
-    println!("Username: {}", username);
 
     //Now that we have the username and ID we can check if they exist in the handler
     let client_tracker = match client_tracker_rw.read() {
@@ -140,39 +137,6 @@ fn get_user_id_from_request(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLoc
 
     Err(format!("Cookie header could not be parsed properly: {}", cookie_text))
 }
-
-// /// Gets the clients ID from an HTTP Request
-// fn get_client_id_from_request(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>) -> Result<ID, String> {
-//     // Gets the cookie text
-//     let mut cookie_text = match get_cookie_from_request(buffer) {
-//         Ok(cookie_text) => cookie_text,
-//         Err(error) => return Err(error),
-//     };
-
-//     //Retains only text, no whitespace
-//     cookie_text.retain(|c| !c.is_whitespace());
-
-//     //Split the text by ';'
-//     let cookie_split = cookie_text.split(";");
-
-//     //Loop through each split
-//     for str in cookie_split {
-
-//         let text = str.to_string();
-//         if text.contains("ID=") {
-//         // Seperates the remaining cookie by the ','
-//         let split_str = str.split(',');
-
-//         }
-        
-//         //We have the ID
-        
-//         //    return ID::from_string(&text);
-//         //}
-//     };
-
-//     Err(String::from("Client ID was not found!"))
-// }
 
 /// Sells a stock from a user
 fn sell_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, company_manager_rw : &Arc<RwLock<CompanyManager>>, user_manager_rw : &Arc<RwLock<UserManager>>) -> Result<String, String> {
