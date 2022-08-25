@@ -116,6 +116,7 @@ fn main() {
             // Resets in [RESET_DELAY] seconds
             reset_time += Duration::new(RESET_DELAY, 0);
 
+            println!("Resetting!");
             // Reset the user manager
             match user_manager_rw.write() {
                 Ok(mut user_man) => user_man.reset_users(),
@@ -152,6 +153,7 @@ fn main() {
             //Adds 20 seconds to the time
             time += Duration::new(LOOP_DELAY,  0);
 
+            // Gets the company manager
             let mut company_manager = match company_manager_rw.write() {
                 Ok(company_manager) => company_manager,
                 Err(error) => panic!("{}", error),

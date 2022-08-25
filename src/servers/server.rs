@@ -145,7 +145,7 @@ fn sell_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracke
     //Gets the users ID
     let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
         Ok(user_id) => user_id,
-        Err(error) => return Err(error),
+        Err(_error) => return Ok(String::from("INVALID ID")),
     };
 
     // Gets the user manager
@@ -175,7 +175,7 @@ fn sell_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracke
     //Sells the users stock
     match user.sell_stock(&company_manager, company.id(), sell_amount) {
         Ok(_) => return Ok(String::from("Sold")),
-        Err(error) => return Err(error),
+        Err(_error) => return Ok(format!("No enough money to purchase stock: {}", company.name())),
     }
 }
 
@@ -221,7 +221,7 @@ fn buy_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker
     //Gets the users ID
     let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
         Ok(user_id) => user_id,
-        Err(error) => return Err(error),
+        Err(_error) => return Ok(String::from("INVALID ID")),
     };
     
     // Gets the user manager
@@ -488,7 +488,7 @@ fn get_response(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTrac
         // Tracks the client
         let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
             Ok(id) => id,
-            Err(error) => return Err(error),
+            Err(_error) => return Ok(String::from("INVALID ID")),
         };
 
         //Reads the user manager
@@ -523,7 +523,7 @@ fn get_response(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTrac
         // Gets the users ID from the client ID
         let user_id : ID = match client_tracker.get_user_id_by_client_id(client_id) {
             Ok(id) => id,
-            Err(error) => return Err(error),
+            Err(_error) => return Ok(String::from("INVALID ID")),
         };
 
         // Reads from the user manager
@@ -601,13 +601,13 @@ pub fn handle_connection(mut stream : TcpStream, client_tracker_rw : &Arc<RwLock
             status_line = "HTTP/1.1 200 OK"; 
         },
         //There was an error processing the request
-        Err(error) => { 
+        Err(error) => {
             // If the ID is wrong make the log back in!
             if error.starts_with("No client with ID") {
                 contents = "INVALID ID".to_string();
                 status_line = "HTTP/1.1 200 OK";
             } else {
-                println!("Error: {}", error);
+                println!("Server Error: {}", error);
                 status_line = "HTTP/1.1 404 NOT FOUND";
                 
                 if error.starts_with("No client with ID") {
