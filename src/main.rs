@@ -56,7 +56,7 @@ fn reset_company_manager(company_manager : &Arc<RwLock<CompanyManager>>) -> Resu
     Ok(())
 }
 
-fn main() {
+fn main() -> Result<(), String> {
     //Read / Write locks
     let company_manager_rw : Arc<RwLock<CompanyManager>> = Arc::new(RwLock::new(CompanyManager::new()));
     let user_manager_rw : Arc<RwLock<UserManager>> = Arc::new(RwLock::new(UserManager::new()));
@@ -68,13 +68,10 @@ fn main() {
     _ = reset_company_manager(&company_manager_rw);
 
     //Web Listener testing
-    let listener_result = TcpListener::bind("127.0.0.1:8000");
-
-    let listener;
-    match listener_result {
-        Ok(connection) => listener = connection,
-        Err(error) => panic!("{}", error),
-    }
+    let listener = match TcpListener::bind("127.0.0.1:8000") {
+        Ok(listener) => listener,
+        Err(error) => return Err(error.to_string()),
+    };
 
     //The company manager / user manager shared across threads!
     let thread_company_manager : Arc<RwLock<CompanyManager>> = Arc::clone(&company_manager_rw);
@@ -82,20 +79,18 @@ fn main() {
     let thread_ranker : Arc<RwLock<Ranker>> = Arc::clone(&ranker_rw);
     let thread_ranker_history : Arc<RwLock<RankerHistory>> = Arc::clone(&ranker_history_rw);
     let thread_client_tracker : Arc<RwLock<ClientTracker>> = Arc::clone(&client_tracker_rw);
+
     // Spawns a thread to listen to web requests!
     thread::spawn(move || {
         for stream in listener.incoming() {
             //Checks for a stream
-            let stream_result = stream;
-    
-            match stream_result {
-                //Handles the streams connection
+            match stream {
                 Ok(stream) => {
-                    //Handles a connection
+                    //Handles a request from a client
                     match server::handle_connection(stream, &thread_client_tracker, &thread_company_manager, &thread_user_manager, &thread_ranker, &thread_ranker_history) {
                         Err(error) => println!("Error: {}", error),
                         _ => (),
-                    }
+                    };
                 },
                 Err(error) => println!("{}", error),
             }
@@ -120,12 +115,12 @@ fn main() {
             // Reset the user manager
             match user_manager_rw.write() {
                 Ok(mut user_man) => user_man.reset_users(),
-                Err(error) => panic!("{}", error),
+                Err(error) => println!("{}", error),
             }
 
             // Resets the stock history / prices of all the companies
             match reset_company_manager(&company_manager_rw) {
-                Err(error) => panic!("{}", error),
+                Err(error) => println!("{}", error),
                 _ => (),
             }
 
@@ -156,7 +151,7 @@ fn main() {
             // Gets the company manager
             let mut company_manager = match company_manager_rw.write() {
                 Ok(company_manager) => company_manager,
-                Err(error) => panic!("{}", error),
+                Err(error) => { println!("{}", error); break; },
             };
 
             // Update the company manager
@@ -165,20 +160,22 @@ fn main() {
             // Reads the user manager
             let user_manager = match user_manager_rw.read() {
                 Ok(user_manager) => user_manager,
-                Err(error) => panic!("{}", error),
+                Err(error) => { println!("{}", error); break; },
             };
 
             // Updates the leaderboards
             match ranker_rw.write() {
                 Ok(mut ranker) => {
                     match ranker.rank_users(&user_manager, &company_manager) {
-                        Err(error) => panic!("{}", error),
+                        Err(error) => println!("{}", error),
                         _ => (),
                     };
                 },
-                Err(error) => panic!("{}", error.to_string()),
+                Err(error) => println!("{}", error.to_string()),
             };
         }
     }
+
+    Ok(())
 }
 

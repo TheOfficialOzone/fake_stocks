@@ -301,6 +301,10 @@ fn create_account(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTr
         //The User name / Display name must be less than 20 characters long
         if user_name.len() > 20 { return Ok(String::from("User name must be less than 20 characters long")); }
         if display_name.len() > 20 { return Ok(String::from("Display name must be less than 20 characters long"))}
+
+        // User name / Display name must be at least 3 characters long
+        if user_name.len() < 3 { return Ok(String::from("User name must be more than 2 characters long")); }
+        if display_name.len() < 3 { return Ok(String::from("Display name must be more than 2 characters long"))}
     }
 
     // Gets the user manager
@@ -451,6 +455,7 @@ fn get_response(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTrac
     //All the possible request headers
     let load_page = b"GET / ";
     let load_login_page = b"GET /login.html";
+    let load_create_page = b"GET /create_account.html";
     let load_stock_data = b"GET /stock_data";
     let load_stock_amount = b"GET /stock_amount";
     let load_cash_amount = b"GET /money";
@@ -468,6 +473,10 @@ fn get_response(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTrac
     //Loads the login page
     if buffer.starts_with(load_login_page) {
         return Ok(read_from_file("html/login.html").unwrap());
+    } else
+    //Loads the create account page
+    if buffer.starts_with(load_create_page) {
+        return Ok(read_from_file("html/create_account.html").unwrap());
     } else
     //Load the stocks valuations
     if buffer.starts_with(load_stock_data) {

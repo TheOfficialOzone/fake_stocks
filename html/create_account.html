@@ -51,9 +51,12 @@
   
   <body style = "font-family: Helvetica; font-size:30px; background-color: #555555; min-width: 900px;">
     <div>
-      <p1><b> Login </b></p1><br>
+      <p2><b>Create Account</b></p2><br>
+
         <label>User name</label><br>
-        <input class="entry_box"; type="text"; id="login_user_name"; name="login_user_name";><br><br>
+        <input class="entry_box"; type="text"; id="create_user_name"; name="create_user_name";><br><br>
+        <label>Displayed name</label><br>
+        <input class="entry_box"; type="text"; id="create_display_name"; name="create_display_name";><br><br>
         <div>
           <label>Password</label><br>
           <!-- Comments are for removing the spacing between each button-->
@@ -61,12 +64,14 @@
           --><button class="password_button"; onclick="add_to_password('left')">Left</button><!--
           --><button class="password_button"; onclick="add_to_password('down')">Down</button><!--
           --><button class="password_button"; onclick="add_to_password('right')">Right</button><br>
-          <button class="password_display"; id="login_password_display">EMPTY</button><br>
+          <button class="password_display"; id="create_password_display">EMPTY</button><br>
           <button class="clear_button"; onclick="clear_password()">Clear Password</button>
         </div>
-        <input class="submit_button"; type="submit"; value="Login"; onclick="login()"><br><br>
+        <input class="submit_button"; type="submit"; value="Create Account"; onclick="create_account()">
     </div>
-    <button class="submit_button"; onclick="goto_create_account()"> Need to Login? </button>
+
+    <br>
+    <button class="submit_button"; onclick="goto_login()"> Need to Login? </button>
   </body>
 
   <script>
@@ -75,20 +80,24 @@
     const PASSWORD_SIZE = 6;
 
     //Goes to the login page
-    function goto_create_account() {
-      location.href = "/create_account.html";
+    function goto_login() {
+      location.href = "/login.html";
     }
 
-    //Logs the user into the server
-    async function login() {
+    //Creates an account on the server
+    async function create_account() {
       //Gets the info from the elements
-      let user_name = document.getElementById("login_user_name").value;
+      let user_name = document.getElementById("create_user_name").value;
+      let display_name = document.getElementById("create_display_name").value;
 
+      //Generates the account data to send to the server
       let account_data = "";
       account_data += "USERNAME:" + user_name + '\n';
-      account_data += "PASSWORD:" + password_text;      // Attempts to sell the data
+      account_data += "DISPLAYNAME:" + display_name + '\n';
+      account_data += "PASSWORD:" + password_text;
 
-      let response = await fetch("login", {
+      // Gets the response to process
+      let response = await fetch("create_account", {
         method: 'POST',
         body: account_data,
       });
@@ -99,40 +108,21 @@
         return;
       }
 
-      // Read response stream
+      // Read the response to check if the account was created
       let text_data = await response.text();
-
+      
       if (text_data.startsWith("ID=")) {
         //Store the cookie
         document.cookie = text_data + ";secure=true;sameSite=None;path=/;";
         //Load the main page
         location.href = "/";
       } else {
-        //We now have an error msg
+        //We now have an error msg, display it
         alert(text_data);
       }
     }
 
     // Adds the text to the password
-    // Text, String (Up, Left, Down, Right)
-    function add_to_password(text) {
-      //Insures the text is a string
-      if (typeof text != "string") return;
-
-      //Ensures the password isn't too large
-      if (password_size < 6) {
-        //Adds the text to the string
-        password_text += text;
-        password_size++;
-
-        //Passwords are seperated by -
-        if (password_size < 6) {
-          password_text += '-';
-        }
-      }
-    }
-
-// Adds the text to the password
     // Text, String (Up, Left, Down, Right)
     function add_to_password(text) {
       //Insures the text is a string
@@ -163,7 +153,7 @@
 
     // Sets the create password display to the current password
     function update_password_display(text) {
-      let password_display = document.getElementById("login_password_display");
+      let password_display = document.getElementById("create_password_display");
       password_display.textContent = text;
     }
   </script>
