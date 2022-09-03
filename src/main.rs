@@ -68,7 +68,7 @@ fn main() -> Result<(), String> {
     _ = reset_company_manager(&company_manager_rw);
 
     //Web Listener testing
-    let listener = match TcpListener::bind("127.0.0.1:8000") {
+    let listener = match TcpListener::bind("192.168.100.113:8000") {
         Ok(listener) => listener,
         Err(error) => return Err(error.to_string()),
     };

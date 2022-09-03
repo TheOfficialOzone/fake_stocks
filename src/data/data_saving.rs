@@ -11,23 +11,17 @@ pub trait SaveData {
 
 /// Reads the file into a string
 pub fn read_from_file(filename : &str) -> Result<String, String> {
-    //Opens the file
-    let file_result = File::open(filename);
-
-    let mut file;
-    match file_result {
-        Ok(opened_file) => file = opened_file,
+    let mut file = match File::open(filename) {
+        Ok(file) => file,
         Err(error) => return Err(error.to_string()),
-    }
+    };
 
     //Reads the contents
     let mut contents : String = String::new();
     match file.read_to_string(&mut contents) {
         Err(error) => return Err(error.to_string()),
-        _ => (),
+        _ => Ok(contents),
     }
-    //Return what was read from the file
-    Ok(contents)
 }
 
 // Saves data to a file

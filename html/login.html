@@ -91,6 +91,7 @@
       let response = await fetch("login", {
         method: 'POST',
         body: account_data,
+        credentials:"include"
       });
 
       // Ensures the status is valid
@@ -104,7 +105,7 @@
 
       if (text_data.startsWith("ID=")) {
         //Store the cookie
-        document.cookie = text_data + ";secure=true;sameSite=None;path=/;";
+        document.cookie = text_data + ";sameSite=Lax;path=/;";
         //Load the main page
         location.href = "/";
       } else {

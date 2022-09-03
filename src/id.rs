@@ -5,11 +5,6 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 
-
-struct IDManager {
-
-}
-
 //IDs are unique for each one created
 #[derive(Clone, Copy)]
 pub struct ID {

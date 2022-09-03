@@ -578,7 +578,7 @@ pub fn handle_connection(mut stream : TcpStream, client_tracker_rw : &Arc<RwLock
     };
 
     //DEBUG: Prints the request!
-    //println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
+    println!("New Request:\n{}", String::from_utf8_lossy(&buffer[..]));
 
     //Gets the response text
     let response_text_result = get_response(&buffer, client_tracker_rw, company_manager_rw, user_manager_rw, ranker_rw, ranker_history_rw);
