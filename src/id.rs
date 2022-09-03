@@ -4,6 +4,12 @@
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+
+
+struct IDManager {
+
+}
+
 //IDs are unique for each one created
 #[derive(Clone, Copy)]
 pub struct ID {
@@ -34,7 +40,6 @@ impl ID {
     pub fn equals(&self, other : ID) -> bool {
         self.value() == other.value()
     }
-
 
     /// Makes an ID from a string
     /// Expects it in the form of "ID=654"

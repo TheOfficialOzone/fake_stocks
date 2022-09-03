@@ -146,21 +146,22 @@ fn sell_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracke
         Err(error) => return Err(error),
     };
 
-    //Splits the request
+    //Splits the request by each piece of data
     let split_request : Vec<&str> = request_data.split(',').collect();
 
+    //Gets the company name and the amount to buy
     let company_name : String;
     let sell_amount : usize;
-    
+
     match split_request.len() {
         2 => {
-            match split_request[0].parse::<usize>(){
-                Ok(amount) => sell_amount = amount,
-                Err(_error) => return Err(String::from("Error parsing thrrough HTTP request!")),
+            sell_amount = match split_request[0].parse::<usize>(){
+                Ok(sell_amount) => sell_amount,
+                Err(_error) => return Err(String::from("Error parsing through HTTP request!")),
             };
             company_name = split_request[1].to_string();
         }
-        _ => return Err(String::from("Error with HTTP request!")),
+        _ => return Err(format!("Error parsing HTTP request: Length of request {} should be 2", split_request.len())),
     }
     
     //Gets the clients ID from the request
@@ -172,7 +173,7 @@ fn sell_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracke
     // Gets the user manager
     let mut user_manager = match user_manager_rw.write() {
         Ok(user_manager) => user_manager,
-        Err(error) => panic!("User manager lock was poisoned: {}", error),
+        Err(error) => return Err(error.to_string()),
     };
 
     // Gets the user mutably
@@ -184,7 +185,7 @@ fn sell_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracke
     //Gets the company manager
     let company_manager = match company_manager_rw.read() {
         Ok(company_manager) => company_manager,
-        Err(error) => panic!("User manager lock was poisoned: {}", error),
+        Err(error) => return Err(error.to_string()),
     };
 
     //Gets the company
@@ -203,13 +204,12 @@ fn sell_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracke
 /// Buys a stock mentioned by the buffer
 fn buy_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker>>, company_manager_rw : &Arc<RwLock<CompanyManager>>, user_manager_rw : &Arc<RwLock<UserManager>>) -> Result<String, String> {    
     //Gets the data from the request
-    let request_data;
-    match get_text_from_request(buffer) {
-        Ok(name) => request_data = name,
+    let request_data = match get_text_from_request(buffer) {
+        Ok(request_data) => request_data,
         Err(error) => return Err(error),
-    }
+    };
 
-    //Splits the request
+    //Splits the request by each piece of data
     let split_request : Vec<&str> = request_data.split(',').collect();
 
     //Gets the company name and the amount to buy
@@ -224,7 +224,7 @@ fn buy_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker
             };
             company_name = split_request[1].to_string();
         }
-        _ => return Err(String::from("Error with HTTP request!")),
+        _ => return Err(format!("Error parsing HTTP request: Length of request {} should be 2", split_request.len())),
     }
 
     //Gets the clients ID from the request
@@ -236,7 +236,7 @@ fn buy_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker
     // Gets the user manager
     let mut user_manager = match user_manager_rw.write() {
         Ok(user_manager) => user_manager,
-        Err(error) => panic!("User manager lock was poisoned: {}", error),
+        Err(error) => return Err(error.to_string()),
     };
 
     // Gets the user mutably
@@ -248,7 +248,7 @@ fn buy_stock(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTracker
     // Gets the company manager
     let company_manager = match company_manager_rw.read() {
         Ok(company_manager) => company_manager,
-        Err(error) => panic!("User manager lock was poisoned: {}", error),
+        Err(error) => return Err(error.to_string()),
     };
 
     //Gets the company
@@ -305,6 +305,10 @@ fn create_account(buffer : &[u8; 1024], client_tracker_rw : &Arc<RwLock<ClientTr
         // User name / Display name must be at least 3 characters long
         if user_name.len() < 3 { return Ok(String::from("User name must be more than 2 characters long")); }
         if display_name.len() < 3 { return Ok(String::from("Display name must be more than 2 characters long"))}
+
+        // User name / Display name cannot contain spaces!
+        if user_name.contains(char::is_whitespace) { return Ok(String::from("User name cannot contain white-space!")); }
+        if display_name.contains(char::is_whitespace) { return Ok(String::from("User name cannot contain white-space!")); }
     }
 
     // Gets the user manager

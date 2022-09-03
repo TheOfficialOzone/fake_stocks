@@ -115,19 +115,19 @@ fn main() -> Result<(), String> {
             // Reset the user manager
             match user_manager_rw.write() {
                 Ok(mut user_man) => user_man.reset_users(),
-                Err(error) => println!("{}", error),
+                Err(error) => return Err(error.to_string()),
             }
 
             // Resets the stock history / prices of all the companies
             match reset_company_manager(&company_manager_rw) {
-                Err(error) => println!("{}", error),
+                Err(error) => return Err(error.to_string()),
                 _ => (),
             }
 
             //Clears the client tracker (Everyone must re-login)
             match client_tracker_rw.write() {
                 Ok(mut client_tracker) => client_tracker.clear(),
-                Err(error) => println!("{}", error),
+                Err(error) => return Err(error.to_string()),
             }
 
             // Writes the old ranker to the ranker
@@ -136,10 +136,10 @@ fn main() -> Result<(), String> {
                 Ok(mut history) => {
                     match ranker_rw.write() {
                         Ok(mut ranker) => { history.add(ranker.clone()); ranker.clear()},
-                        Err(error) => println!("{}", error),
+                        Err(error) => return Err(error.to_string()),
                     }
                 },
-                Err(error) => println!("{}", error),
+                Err(error) => return Err(error.to_string()),
             }
         }
         
@@ -151,7 +151,7 @@ fn main() -> Result<(), String> {
             // Gets the company manager
             let mut company_manager = match company_manager_rw.write() {
                 Ok(company_manager) => company_manager,
-                Err(error) => { println!("{}", error); break; },
+                Err(error) => return Err(error.to_string()),
             };
 
             // Update the company manager
@@ -160,22 +160,20 @@ fn main() -> Result<(), String> {
             // Reads the user manager
             let user_manager = match user_manager_rw.read() {
                 Ok(user_manager) => user_manager,
-                Err(error) => { println!("{}", error); break; },
+                Err(error) => return Err(error.to_string()),
             };
 
             // Updates the leaderboards
             match ranker_rw.write() {
                 Ok(mut ranker) => {
                     match ranker.rank_users(&user_manager, &company_manager) {
-                        Err(error) => println!("{}", error),
+                        Err(error) => return Err(error.to_string()),
                         _ => (),
                     };
                 },
-                Err(error) => println!("{}", error.to_string()),
+                Err(error) => return Err(error.to_string()),
             };
         }
     }
-
-    Ok(())
 }
 

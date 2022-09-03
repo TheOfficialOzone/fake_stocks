@@ -230,7 +230,7 @@
       // company (String)
       // amount (u_int)
       async function buy_stock(company, amount) {
-        //Ensures they have enough money to buy before sending the request
+        // Ensures they have enough money to buy before sending the request
         // Note: Even with this check, when the request hits the server it's possible that the share price updated and this check is no longer valid
         // However this reduces the amount of invalid request none-the-less
         let current_stock_price = company_current_price.get(company.toLowerCase());

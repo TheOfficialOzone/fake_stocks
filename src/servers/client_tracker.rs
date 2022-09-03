@@ -35,7 +35,7 @@ impl ConnectedClient {
     }
 
     /// Checks if the IDs are identical
-    fn equal_id(&self, other_id : ID) -> bool {
+    fn equal_client_id(&self, other_id : ID) -> bool {
         self.client_id.equals(other_id)
     }
 
@@ -79,7 +79,6 @@ impl ClientTracker {
         Ok(stored_id)
     }
 
-
     /// Gets the client by their ID
     pub fn get_client_by_client_id(&self, client_id : ID) -> Result<&ConnectedClient, String> {
         // Filters for the remaining client
@@ -98,7 +97,7 @@ impl ClientTracker {
         // Filters all clients for matching addresses
         let filtered : Vec<&ConnectedClient> = self.clients
             .iter()
-            .filter(|client| client.equal_id(client_id))
+            .filter(|client| client.equal_client_id(client_id))
             .collect();
 
         // The length should be 1
@@ -128,7 +127,7 @@ impl ClientTracker {
         // Filters all clients for matching addresses
         let filtered : Vec<&ConnectedClient> = self.clients
             .iter()
-            .filter(|client| client.equal_id(client_id))
+            .filter(|client| client.equal_client_id(client_id))
             .collect();
 
         // The length should be 1
