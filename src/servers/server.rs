@@ -628,10 +628,5 @@ pub fn handle_connection(mut stream : TcpStream, client_tracker_rw : &Arc<RwLock
     }
 
     //Flushes the response
-    match stream.flush() {
-        Err(error) => return Err(error.to_string()),
-        _ => (),
-    }
-
-    Ok(())
+    stream.flush()
 }
