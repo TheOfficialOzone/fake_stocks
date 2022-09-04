@@ -68,12 +68,12 @@ fn main() -> Result<(), String> {
     _ = reset_company_manager(&company_manager_rw);
 
     //Web Listener testing
-    let listener = match TcpListener::bind("192.168.100.113:8000") {
+    let listener = match TcpListener::bind("127.0.0.1:8000") {
         Ok(listener) => listener,
         Err(error) => return Err(error.to_string()),
     };
 
-    //The company manager / user manager shared across threads!
+    // The company manager / user manager shared across threads!
     let thread_company_manager : Arc<RwLock<CompanyManager>> = Arc::clone(&company_manager_rw);
     let thread_user_manager : Arc<RwLock<UserManager>> = Arc::clone(&user_manager_rw);
     let thread_ranker : Arc<RwLock<Ranker>> = Arc::clone(&ranker_rw);
