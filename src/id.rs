@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 
 //IDs are unique for each one created
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct ID {
     id : usize,
 }

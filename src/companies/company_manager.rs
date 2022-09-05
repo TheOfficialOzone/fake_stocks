@@ -8,6 +8,7 @@ use rand::Rng;
 
 /// The Company manager holds all other companies
 /// This is so you can search for specific companies by their IDs, etc
+#[derive(Debug)]
 pub struct CompanyManager<> {
     companies : Vec<Company>,
     stored_save : String,

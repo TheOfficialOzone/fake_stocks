@@ -10,7 +10,7 @@ use crate::ID;
 /// 
 /// They have shares that can be bought and sold at the price
 /// They are responsible for tracking their previous stock price
-
+#[derive(Debug)]
 pub struct Company {
     id : ID,
     name : String,

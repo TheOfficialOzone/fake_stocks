@@ -1,7 +1,5 @@
 
 
-
-
 //For storing IDs
 use crate::id::ID;
 
@@ -29,32 +27,26 @@ mod users;
 mod id;
 
 /// Resets the company manager
-fn reset_company_manager(company_manager : &Arc<RwLock<CompanyManager>>) -> Result<(), String> {
-    //Start the company manager
-    let mut company_man;
-    match company_manager.write() {
-        Ok(company_manager) => company_man = company_manager,
-        Err(error) => return Err(error.to_string()),
-    };
-
+fn reset_company_manager(company_manager : &mut CompanyManager) -> Result<(), String> {
     //Resets Apple
-    match company_man.get_company_by_name_mut(&String::from("Apple")) {
+    match company_manager.get_company_by_name_mut(&String::from("Apple")) {
         Ok(company) => { company.reset_company(200.0).unwrap(); company.id()},
-        Err(_error) => company_man.new_company(String::from("Apple"), 200.0),
+        Err(_error) => company_manager.new_company(String::from("Apple"), 200.0),
     };
 
     //Resets Amazon
-    match company_man.get_company_by_name_mut(&String::from("Amazon")) {
+    match company_manager.get_company_by_name_mut(&String::from("Amazon")) {
         Ok(company) => { company.reset_company(200.0).unwrap(); company.id()},
-        Err(_error) => company_man.new_company(String::from("Amazon"), 200.0),
+        Err(_error) => company_manager.new_company(String::from("Amazon"), 200.0),
     };
 
     for _ in 0..50 {
-        company_man.update();
+        company_manager.update();
     }
 
     Ok(())
 }
+
 
 fn main() -> Result<(), String> {
     //Read / Write locks
@@ -65,7 +57,7 @@ fn main() -> Result<(), String> {
     let client_tracker_rw : Arc<RwLock<ClientTracker>> = Arc::new(RwLock::new(ClientTracker::new()));
 
     //Resets the company manager
-    _ = reset_company_manager(&company_manager_rw);
+    _ = reset_company_manager(&mut company_manager_rw.write().unwrap());
 
     //Web Listener testing
     let listener = match TcpListener::bind("127.0.0.1:8000") {
@@ -118,8 +110,14 @@ fn main() -> Result<(), String> {
                 Err(error) => return Err(error.to_string()),
             }
 
+            // Gets the company manager
+            let mut company_manager = match company_manager_rw.write() {
+                Ok(company_manager) => company_manager,
+                Err(error) => return Err(error.to_string()),
+            };
+
             // Resets the stock history / prices of all the companies
-            match reset_company_manager(&company_manager_rw) {
+            match reset_company_manager(&mut company_manager) {
                 Err(error) => return Err(error.to_string()),
                 _ => (),
             }
@@ -177,3 +175,44 @@ fn main() -> Result<(), String> {
     }
 }
 
+
+
+
+#[cfg(test)]
+mod tests {
+    use crate::{companies::company_manager::CompanyManager, id::ID};
+
+    #[test]
+    fn company_manager_test() {
+        let mut company_manager: CompanyManager = CompanyManager::new();
+
+        let gamer = company_manager.new_company(String::from("Gamer"), 1.01);
+        let gamerers = company_manager.new_company(String::from("Gamerers"), 2.01);
+
+        company_manager.get_company_by_id(gamer).unwrap();
+        company_manager.get_company_by_id(gamerers).unwrap();
+        if let Ok(_company) = company_manager.get_company_by_id(ID::new()) {
+            panic!("Should not find a company that doesn't exist");
+        }
+
+        company_manager.get_company_by_name(&String::from("Gamer")).unwrap();
+        company_manager.get_company_by_name(&String::from("Gamerers")).unwrap();
+        if let Ok(_company) = company_manager.get_company_by_name(&String::from("Jeff Bezos")) {
+            panic!("Should not find a company that doesn't exist");
+        }
+
+        company_manager.get_company_by_name_mut(&String::from("Gamer")).unwrap();
+        company_manager.get_company_by_name_mut(&String::from("Gamerers")).unwrap();
+        if let Ok(_company) = company_manager.get_company_by_name_mut(&String::from("Jeff Bezos")) {
+            panic!("Should not find a company that doesn't exist");
+        }
+    }
+
+    fn test() {
+        
+        // let user_manager : Arc<RwLock<UserManager>> = Arc::new(RwLock::new(UserManager::new()));
+        // let ranker : Arc<RwLock<Ranker>> = Arc::new(RwLock::new(Ranker::new()));
+        // let ranker_history_rw : Arc<RwLock<RankerHistory>> = Arc::new(RwLock::new(RankerHistory::new()));
+        // let client_tracker_rw : Arc<RwLock<ClientTracker>> = Arc::new(RwLock::new(ClientTracker::new()));
+    }
+}
